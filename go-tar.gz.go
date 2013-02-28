@@ -13,16 +13,65 @@ import (
 	"path"
 )
 
-func handleError(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
+func main() {
+	targetFilePath := "/home/unknown/Applications/Go/src/test.tar.gz"
+	srcDirPath := "test"
+	TarGz(srcDirPath, targetFilePath)
+	fmt.Println("Finish!")
+}
 
+// Gzip and tar from source directory to destination file
+func TarGz(srcDirPath string, destFilePath string) {
+	// File writer
+	fw, err := os.Create(destFilePath)
+	handleError(err)
+	defer fw.Close()
+
+	// Gzip writer
+	gw := gzip.NewWriter(fw)
+	defer gw.Close()
+
+	// Tar writer
+	tw := tar.NewWriter(gw)
+	defer tw.Close()
+
+	// handle source directory
+	TarGzDir(srcDirPath, path.Base(srcDirPath), tw)
+}
+
+// Deal with directories
+// if find files, handle them with HandleFile
+// Every recurrence append the base path to the recPath
+// recPath is the path inside of tar.gz
+func TarGzDir(srcDirPath string, recPath string, tw *tar.Writer) {
+	// Open source diretory
+	dir, err := os.Open(srcDirPath)
+	handleError(err)
+	defer dir.Close()
+
+	// Get file info slice
+	fis, err := dir.Readdir(0)
+	handleError(err)
+	for _, fi := range fis {
+		// Append path
+		curPath := srcDirPath + "/" + fi.Name()
+		// Check it is directory or file
+		if fi.IsDir() {
+			// Directory
+			// (Directory won't add unitl all subfiles are added)
+			fmt.Printf("Adding path...%s\n", curPath)
+			TarGzDir(curPath, recPath+"/"+fi.Name(), tw)
+		} else {
+			// File
+			fmt.Printf("Adding file...%s\n", curPath)
+		}
+
+		TarGzFile(curPath, recPath+"/"+fi.Name(), tw, fi)
+	}
 }
 
 // Deal with files
-func HandleFile(srcFile string, recPath string,
-	tw *tar.Writer, fi os.FileInfo) {
+func TarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 	if fi.IsDir() {
 		// Create tar header
 		hdr := new(tar.Header)
@@ -54,57 +103,9 @@ func HandleFile(srcFile string, recPath string,
 	}
 }
 
-// Deal with directories
-// if find files, handle them with HandleFile
-// Every recurrence append the base path to the recPath
-// recPath is the path inside of tar.gz
-func HandleDir(srcDirPath string, recPath string, tw *tar.Writer) {
-	// Open source diretory
-	dir, err := os.Open(srcDirPath)
-	handleError(err)
-	defer dir.Close()
-
-	// Get file info slice
-	fis, err := dir.Readdir(0)
-	handleError(err)
-	for _, fi := range fis {
-		// Append path
-		curPath := srcDirPath + "/" + fi.Name()
-		// Check it is directory or file
-		if fi.IsDir() {
-			// Directory
-			HandleDir(curPath, recPath+"/"+fi.Name(), tw)
-		} else {
-			// File
-			fmt.Printf("Adding file...%s\n", curPath)
-		}
-
-		HandleFile(curPath, recPath+"/"+fi.Name(), tw, fi)
+func handleError(e error) {
+	if e != nil {
+		log.Fatal(e)
 	}
-}
 
-// Gzip and tar from source directory to destination file
-func TarGz(srcDirPath string, destFilePath string) {
-	// File writer
-	fw, err := os.Create(destFilePath)
-	handleError(err)
-	defer fw.Close()
-
-	// Gzip writer
-	gw := gzip.NewWriter(fw)
-	defer gw.Close()
-
-	// Tar writer
-	tw := tar.NewWriter(gw)
-	defer tw.Close()
-
-	// handle source directory
-	HandleDir(srcDirPath, path.Base(srcDirPath), tw)
-}
-
-func main() {
-	targetFilePath := "/home/unknown/Applications/Go/src/test.tar.gz"
-	srcDirPath := "test"
-	TarGz(srcDirPath, targetFilePath)
-	fmt.Println("Finish!")
 }
