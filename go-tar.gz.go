@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 )
 
 func handleError(e error) {
@@ -20,11 +21,12 @@ func handleError(e error) {
 }
 
 // Deal with files
-func HandleFile(srcFile string, tw *tar.Writer, fi os.FileInfo) {
+func HandleFile(srcFile string, recPath string,
+	tw *tar.Writer, fi os.FileInfo) {
 	if fi.IsDir() {
 		// Create tar header
 		hdr := new(tar.Header)
-		hdr.Name = srcFile + "/"
+		hdr.Name = recPath + "/"
 
 		// Write hander
 		err := tw.WriteHeader(hdr)
@@ -37,7 +39,7 @@ func HandleFile(srcFile string, tw *tar.Writer, fi os.FileInfo) {
 
 		// Create tar header
 		hdr := new(tar.Header)
-		hdr.Name = srcFile
+		hdr.Name = recPath
 		hdr.Size = fi.Size()
 		hdr.Mode = int64(fi.Mode())
 		hdr.ModTime = fi.ModTime()
@@ -54,7 +56,9 @@ func HandleFile(srcFile string, tw *tar.Writer, fi os.FileInfo) {
 
 // Deal with directories
 // if find files, handle them with HandleFile
-func HandleDir(srcDirPath string, tw *tar.Writer) {
+// Every recurrence append the base path to the recPath
+// recPath is the path inside of tar.gz
+func HandleDir(srcDirPath string, recPath string, tw *tar.Writer) {
 	// Open source diretory
 	dir, err := os.Open(srcDirPath)
 	handleError(err)
@@ -69,13 +73,13 @@ func HandleDir(srcDirPath string, tw *tar.Writer) {
 		// Check it is directory or file
 		if fi.IsDir() {
 			// Directory
-			HandleDir(curPath, tw)
+			HandleDir(curPath, recPath+"/"+fi.Name(), tw)
 		} else {
 			// File
 			fmt.Printf("Adding file...%s\n", curPath)
 		}
 
-		HandleFile(curPath, tw, fi)
+		HandleFile(curPath, recPath+"/"+fi.Name(), tw, fi)
 	}
 }
 
@@ -95,12 +99,12 @@ func TarGz(srcDirPath string, destFilePath string) {
 	defer tw.Close()
 
 	// handle source directory
-	HandleDir(srcDirPath, tw)
+	HandleDir(srcDirPath, path.Base(srcDirPath), tw)
 }
 
 func main() {
 	targetFilePath := "/home/unknown/Applications/Go/src/test.tar.gz"
-	inputDirPath := "/home/unknown/Applications/Go/src/test"
-	TarGz(inputDirPath, targetFilePath)
+	srcDirPath := "test"
+	TarGz(srcDirPath, targetFilePath)
 	fmt.Println("Finish!")
 }
