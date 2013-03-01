@@ -14,15 +14,16 @@ import (
 )
 
 func main() {
-	targetFilePath := "/home/unknown/Applications/Go/src/test.tar.gz"
+	targetFilePath := "test.tar.gz"
 	srcDirPath := "test"
 	TarGz(srcDirPath, targetFilePath)
 	fmt.Println("Finish!")
 }
 
 // Gzip and tar from source directory to destination file
+// you need check file exist before you call this function
 func TarGz(srcDirPath string, destFilePath string) {
-	// File writer
+	fmt.Println("Cerating tar.gz...")
 	fw, err := os.Create(destFilePath)
 	handleError(err)
 	defer fw.Close()
