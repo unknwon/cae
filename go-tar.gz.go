@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 )
 
 func main() {
@@ -101,6 +102,43 @@ func TarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 		// Write file data
 		_, err = io.Copy(tw, fr)
 		handleError(err)
+	}
+}
+
+// Ungzip and untar from source file to destination directory
+// you need check file exist before you call this function
+func UnTarGz(srcFilePath string, destDirPath string) {
+	fmt.Println("UnTarGzing tar.gz...")
+	fr, err := os.Open(srcFilePath)
+	handleError(err)
+	defer fr.Close()
+
+	// Set current directory path
+	curDirPath := destDirPath
+	// Tar reader
+	tr := tar.NewReader(fr)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			// End of tar archive
+			break
+		}
+		handleError(err)
+
+		// Get files from archive
+		if strings.Contains(hdr.Name, "/") {
+			// This is a path
+			curDirPath = destDirPath + "/" + hdr.Name
+			_, err := os.Create(curDirPath)
+			handleError(err)
+		} else {
+			// This is a file
+			fw, err := os.Create(curDirPath + "/" + hdr.Name)
+			handleError(err)
+			// Write data to file
+			_, err = io.Copy(fw, tr)
+			handleError(err)
+		}
 	}
 }
 
