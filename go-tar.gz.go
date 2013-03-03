@@ -29,8 +29,8 @@ const (
 )
 
 func main() {
-	targetFilePath := "test.tar.gz"
-	srcDirPath := "test"
+	targetFilePath := "testdata.tar.gz"
+	srcDirPath := "testdata"
 	TarGz(srcDirPath, targetFilePath)
 	UnTarGz(targetFilePath, srcDirPath+"_temp")
 	fmt.Println("Finish!")
@@ -95,7 +95,8 @@ func TarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 		hdr.Name = recPath + "/"
 		hdr.Typeflag = tar.TypeDir
 		hdr.Size = 0
-		hdr.Mode = 0755 | c_ISDIR
+		//hdr.Mode = 0755 | c_ISDIR
+		hdr.Mode = int64(fi.Mode())
 		hdr.ModTime = fi.ModTime()
 		// if last character of header name is '/' it also can be directory
 
