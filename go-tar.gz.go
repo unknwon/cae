@@ -1,6 +1,9 @@
 // Copyright 2013 The Author - Unknown. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
+// Help linls:
+// https://codereview.appspot.com/7305072
 package main
 
 import (
@@ -11,13 +14,25 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
+)
+
+// Copy from http://golang.org/misc/dist/bindist.go
+// Mode constants from the tar spec.
+const (
+	c_ISDIR  = 040000
+	c_ISFIFO = 010000
+	c_ISREG  = 0100000
+	c_ISLNK  = 0120000
+	c_ISBLK  = 060000
+	c_ISCHR  = 020000
+	c_ISSOCK = 0140000
 )
 
 func main() {
 	targetFilePath := "test.tar.gz"
 	srcDirPath := "test"
 	TarGz(srcDirPath, targetFilePath)
+	UnTarGz(targetFilePath, srcDirPath+"_temp")
 	fmt.Println("Finish!")
 }
 
@@ -78,6 +93,11 @@ func TarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 		// Create tar header
 		hdr := new(tar.Header)
 		hdr.Name = recPath + "/"
+		hdr.Typeflag = tar.TypeDir
+		hdr.Size = 0
+		hdr.Mode = 0755 | c_ISDIR
+		hdr.ModTime = fi.ModTime()
+		// if last character of header name is '/' it also can be directory
 
 		// Write hander
 		err := tw.WriteHeader(hdr)
@@ -108,34 +128,38 @@ func TarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 // Ungzip and untar from source file to destination directory
 // you need check file exist before you call this function
 func UnTarGz(srcFilePath string, destDirPath string) {
-	fmt.Println("UnTarGzing tar.gz...")
+	fmt.Println("UnTarGzing " + srcFilePath + "...")
+	// Create destination directory
+	os.Mkdir(destDirPath, os.ModePerm)
+
 	fr, err := os.Open(srcFilePath)
 	handleError(err)
 	defer fr.Close()
 
-	// Set current directory path
-	curDirPath := destDirPath
+	// Gzip reader
+	gr, err := gzip.NewReader(fr)
+
 	// Tar reader
-	tr := tar.NewReader(fr)
+	tr := tar.NewReader(gr)
+
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
 			// End of tar archive
 			break
 		}
-		handleError(err)
+		//handleError(err)
+		fmt.Println("UnTarGzing file..." + hdr.Name)
 
-		// Get files from archive
-		if strings.Contains(hdr.Name, "/") {
-			// This is a path
-			curDirPath = destDirPath + "/" + hdr.Name
-			_, err := os.Create(curDirPath)
-			handleError(err)
-		} else {
-			// This is a file
-			fw, err := os.Create(curDirPath + "/" + hdr.Name)
-			handleError(err)
+		// If header name ends with '/' means it is directory ,
+		// and doesn't need extract
+		c := []byte(hdr.Name)
+		if c[len(hdr.Name)-1] != '/' {
+			// Get files from archive
+			os.MkdirAll(destDirPath+"/"+path.Dir(hdr.Name), os.ModePerm)
 			// Write data to file
+			fw, _ := os.Create(destDirPath + "/" + hdr.Name)
+			handleError(err)
 			_, err = io.Copy(fw, tr)
 			handleError(err)
 		}
