@@ -152,10 +152,7 @@ func UnTarGz(srcFilePath string, destDirPath string) {
 		//handleError(err)
 		fmt.Println("UnTarGzing file..." + hdr.Name)
 
-		// If header name ends with '/' means it is directory ,
-		// and doesn't need extract
-		c := []byte(hdr.Name)
-		if c[len(hdr.Name)-1] != '/' {
+		if hdr.Typeflag != tar.TypeDir {
 			// Get files from archive
 			os.MkdirAll(destDirPath+"/"+path.Dir(hdr.Name), os.ModePerm)
 			// Write data to file
