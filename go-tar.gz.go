@@ -82,13 +82,14 @@ func tarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 	if fi.IsDir() {
 		// Create tar header
 		hdr := new(tar.Header)
+		// if last character of header name is '/' it also can be directory
+		// but if you don't set Typeflag, error will occur when you untargz
 		hdr.Name = recPath + "/"
 		hdr.Typeflag = tar.TypeDir
 		hdr.Size = 0
 		//hdr.Mode = 0755 | c_ISDIR
 		hdr.Mode = int64(fi.Mode())
 		hdr.ModTime = fi.ModTime()
-		// if last character of header name is '/' it also can be directory
 
 		// Write hander
 		err := tw.WriteHeader(hdr)
@@ -141,9 +142,10 @@ func UnTarGz(srcFilePath string, destDirPath string) {
 		}
 		//handleError(err)
 		fmt.Println("UnTarGzing file..." + hdr.Name)
-
+		// Check if it is diretory or file
 		if hdr.Typeflag != tar.TypeDir {
 			// Get files from archive
+			// Create diretory before create file
 			os.MkdirAll(destDirPath+"/"+path.Dir(hdr.Name), os.ModePerm)
 			// Write data to file
 			fw, _ := os.Create(destDirPath + "/" + hdr.Name)
