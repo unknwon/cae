@@ -4,7 +4,7 @@
 
 // Help linls:
 // https://codereview.appspot.com/7305072
-package main
+package gocompresser
 
 import (
 	"archive/tar"
@@ -16,25 +16,15 @@ import (
 	"path"
 )
 
-// Copy from http://golang.org/misc/dist/bindist.go
-// Mode constants from the tar spec.
-const (
-	c_ISDIR  = 040000
-	c_ISFIFO = 010000
-	c_ISREG  = 0100000
-	c_ISLNK  = 0120000
-	c_ISBLK  = 060000
-	c_ISCHR  = 020000
-	c_ISSOCK = 0140000
-)
-
-func main() {
-	targetFilePath := "testdata.tar.gz"
-	srcDirPath := "testdata"
-	TarGz(srcDirPath, targetFilePath)
-	UnTarGz(targetFilePath, srcDirPath+"_temp")
-	fmt.Println("Finish!")
-}
+// main functions shows how to TarGz a directory and
+// UnTarGz a file
+//func main() {
+//	targetFilePath := "testdata.tar.gz"
+//	srcDirPath := "testdata"
+//	TarGz(srcDirPath, targetFilePath)
+//	UnTarGz(targetFilePath, srcDirPath+"_temp")
+//	fmt.Println("Finish!")
+//}
 
 // Gzip and tar from source directory to destination file
 // you need check file exist before you call this function
@@ -53,14 +43,14 @@ func TarGz(srcDirPath string, destFilePath string) {
 	defer tw.Close()
 
 	// handle source directory
-	TarGzDir(srcDirPath, path.Base(srcDirPath), tw)
+	tarGzDir(srcDirPath, path.Base(srcDirPath), tw)
 }
 
 // Deal with directories
 // if find files, handle them with HandleFile
 // Every recurrence append the base path to the recPath
 // recPath is the path inside of tar.gz
-func TarGzDir(srcDirPath string, recPath string, tw *tar.Writer) {
+func tarGzDir(srcDirPath string, recPath string, tw *tar.Writer) {
 	// Open source diretory
 	dir, err := os.Open(srcDirPath)
 	handleError(err)
@@ -77,18 +67,18 @@ func TarGzDir(srcDirPath string, recPath string, tw *tar.Writer) {
 			// Directory
 			// (Directory won't add unitl all subfiles are added)
 			fmt.Printf("Adding path...%s\n", curPath)
-			TarGzDir(curPath, recPath+"/"+fi.Name(), tw)
+			tarGzDir(curPath, recPath+"/"+fi.Name(), tw)
 		} else {
 			// File
 			fmt.Printf("Adding file...%s\n", curPath)
 		}
 
-		TarGzFile(curPath, recPath+"/"+fi.Name(), tw, fi)
+		tarGzFile(curPath, recPath+"/"+fi.Name(), tw, fi)
 	}
 }
 
 // Deal with files
-func TarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
+func tarGzFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) {
 	if fi.IsDir() {
 		// Create tar header
 		hdr := new(tar.Header)
