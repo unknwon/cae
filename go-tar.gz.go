@@ -60,7 +60,7 @@ func TarGz(srcDirPath string, destFilePath string) {
 }
 
 // Deal with directories
-// if find files, handle them with HandleFile
+// if find files, handle them with tarGzFile
 // Every recurrence append the base path to the recPath
 // recPath is the path inside of tar.gz
 func tarGzDir(srcDirPath string, recPath string, tw *tar.Writer) {
