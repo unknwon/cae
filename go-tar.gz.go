@@ -165,4 +165,5 @@ func UnTarGz(srcFilePath string, destDirPath string) {
 			handleError(err)
 		}
 	}
+	fmt.Println("Well done!")
 }

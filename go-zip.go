@@ -7,13 +7,15 @@ package main
 import (
 	"archive/zip"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
 )
 
 func main() {
-	Zip("testdata", "ok.zip")
+	Zip("../demos", "demos.zip")
+	UnZip("demos.zip", "./")
 }
 
 // Zip from source directory or file to destination file
@@ -103,6 +105,35 @@ func zipFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) {
 		_, err = fw.Write(buf)
 		handleError(err)
 	}
+}
+
+// Unzip from source file to destination directory
+// you need check file exist before you call this function
+func UnZip(srcFilePath string, destDirPath string) {
+	fmt.Println("Unzipping " + srcFilePath + "...")
+	// Create destination directory
+	os.Mkdir(destDirPath, os.ModePerm)
+
+	// Open a zip archive for reading
+	r, err := zip.OpenReader(srcFilePath)
+	handleError(err)
+	defer r.Close()
+
+	// Iterate through the files in the archive
+	for _, f := range r.File {
+		fmt.Println("Unzipping file..." + f.FileInfo().Name())
+		// Get files from archive
+		rc, err := f.Open()
+		handleError(err)
+		// Create diretory before create file
+		os.MkdirAll(destDirPath+"/"+path.Dir(f.FileInfo().Name()), os.ModePerm)
+		// Write data to file
+		fw, _ := os.Create(destDirPath + "/" + f.FileInfo().Name())
+		handleError(err)
+		_, err = io.Copy(fw, rc)
+		handleError(err)
+	}
+	fmt.Println("Well done!")
 }
 
 func handleError(e error) {
