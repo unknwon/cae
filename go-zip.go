@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	Zip("/Users/Joe/Applications/Go/src/demos", "ok.zip")
+	Zip("testdata", "ok.zip")
 }
 
 // Zip from source directory or file to destination file
@@ -31,13 +31,11 @@ func Zip(srcDirPath string, destFilePath string) {
 	handleError(err)
 	fi, err := f.Stat()
 	handleError(err)
-	switch {
-	case fi.IsDir():
+	if fi.IsDir() {
 		// handle source directory
 		fmt.Println("Cerating zip from directory...")
 		zipDir(srcDirPath, path.Base(srcDirPath), zw)
-		fallthrough
-	case 0 == (os.ModeType & fi.Mode()):
+	} else {
 		// handle file directly
 		fmt.Println("Cerating zip from " + fi.Name() + "...")
 		zipFile(srcDirPath, fi.Name(), zw, fi)
@@ -79,19 +77,29 @@ func zipDir(srcDirPath string, recPath string, zw *zip.Writer) {
 // Deal with file
 func zipFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) {
 	if fi.IsDir() {
-
-	} else {
-		// File header
+		// Create zip header
 		fh := new(zip.FileHeader)
-		fh.Name = fi.Name()
+		fh.Name = recPath + "/"
+		fh.UncompressedSize = 0
+
+		_, err := zw.CreateHeader(fh)
+		handleError(err)
+	} else {
+		// Create zip header
+		fh := new(zip.FileHeader)
+		fh.Name = recPath
 		fh.UncompressedSize = uint32(fi.Size())
 		fw, err := zw.CreateHeader(fh)
 		handleError(err)
+
+		// Read file data
 		buf := make([]byte, fi.Size())
 		f, err := os.Open(srcFile)
 		handleError(err)
 		_, err = f.Read(buf)
 		handleError(err)
+
+		// Write file data to zip
 		_, err = fw.Write(buf)
 		handleError(err)
 	}

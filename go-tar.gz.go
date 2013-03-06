@@ -45,13 +45,11 @@ func TarGz(srcDirPath string, destFilePath string) {
 	handleError(err)
 	fi, err := f.Stat()
 	handleError(err)
-	switch {
-	case fi.IsDir():
+	if fi.IsDir() {
 		// handle source directory
 		fmt.Println("Cerating tar.gz from directory...")
 		tarGzDir(srcDirPath, path.Base(srcDirPath), tw)
-		fallthrough
-	case 0 == (os.ModeType & fi.Mode()):
+	} else {
 		// handle file directly
 		fmt.Println("Cerating tar.gz from " + fi.Name() + "...")
 		tarGzFile(srcDirPath, fi.Name(), tw, fi)
