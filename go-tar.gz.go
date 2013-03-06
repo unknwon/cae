@@ -53,8 +53,8 @@ func TarGz(srcDirPath string, destFilePath string) {
 		fallthrough
 	case 0 == (os.ModeType & fi.Mode()):
 		// handle file directly
-		fmt.Println("Cerating tar.gz from file...")
-		tarGzFile(srcDirPath, "", tw, fi)
+		fmt.Println("Cerating tar.gz from " + fi.Name() + "...")
+		tarGzFile(srcDirPath, fi.Name(), tw, fi)
 	}
 	fmt.Println("Well done!")
 }
