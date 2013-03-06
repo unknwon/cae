@@ -23,13 +23,11 @@ import (
 //	srcDirPath := "testdata"
 //	TarGz(srcDirPath, targetFilePath)
 //	UnTarGz(targetFilePath, srcDirPath+"_temp")
-//	fmt.Println("Finish!")
 //}
 
 // Gzip and tar from source directory to destination file
 // you need check file exist before you call this function
 func TarGz(srcDirPath string, destFilePath string) {
-	fmt.Println("Cerating tar.gz...")
 	fw, err := os.Create(destFilePath)
 	handleError(err)
 	defer fw.Close()
@@ -42,8 +40,23 @@ func TarGz(srcDirPath string, destFilePath string) {
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
 
-	// handle source directory
-	tarGzDir(srcDirPath, path.Base(srcDirPath), tw)
+	// Check if it's a file a directory
+	f, err := os.Open(srcDirPath)
+	handleError(err)
+	fi, err := f.Stat()
+	handleError(err)
+	switch {
+	case fi.IsDir():
+		// handle source directory
+		fmt.Println("Cerating tar.gz from directory...")
+		tarGzDir(srcDirPath, path.Base(srcDirPath), tw)
+		fallthrough
+	case 0 == (os.ModeType & fi.Mode()):
+		// handle file directly
+		fmt.Println("Cerating tar.gz from file...")
+		tarGzFile(srcDirPath, "", tw, fi)
+	}
+	fmt.Println("Well done!")
 }
 
 // Deal with directories
