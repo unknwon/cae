@@ -25,7 +25,7 @@ import (
 //	UnTarGz(targetFilePath, srcDirPath+"_temp")
 //}
 
-// Gzip and tar from source directory to destination file
+// Gzip and tar from source directory or file to destination file
 // you need check file exist before you call this function
 func TarGz(srcDirPath string, destFilePath string) {
 	fw, err := os.Create(destFilePath)
@@ -40,7 +40,7 @@ func TarGz(srcDirPath string, destFilePath string) {
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
 
-	// Check if it's a file a directory
+	// Check if it's a file or a directory
 	f, err := os.Open(srcDirPath)
 	handleError(err)
 	fi, err := f.Stat()
@@ -167,11 +167,4 @@ func UnTarGz(srcFilePath string, destDirPath string) {
 			handleError(err)
 		}
 	}
-}
-
-func handleError(e error) {
-	if e != nil {
-		log.Fatal(e)
-	}
-
 }
