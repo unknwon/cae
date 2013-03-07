@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package gocompresser
 
 import (
 	"archive/zip"
@@ -13,10 +13,14 @@ import (
 	"path"
 )
 
-func main() {
-	Zip("../demos", "demos.zip")
-	UnZip("demos.zip", "./")
-}
+// main functions shows how to Zip a directory/file and
+// UnZip a file
+//func main() {
+//	targetFilePath := "demos.zip"
+//	srcDirPath := "../demos"
+//	Zip(srcDirPath, targetFilePath)
+//	UnZip(targetFilePath, "./")
+//}
 
 // Zip from source directory or file to destination file
 // you need check file exist before you call this function

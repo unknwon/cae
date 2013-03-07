@@ -11,12 +11,11 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 )
 
-// main functions shows how to TarGz a directory and
+// main functions shows how to TarGz a directory/file and
 // UnTarGz a file
 //func main() {
 //	targetFilePath := "testdata.tar.gz"
