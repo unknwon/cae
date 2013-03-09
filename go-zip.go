@@ -26,6 +26,7 @@ import (
 // you need check file exist before you call this function
 func Zip(srcDirPath string, destFilePath string) {
 	fw, err := os.Create(destFilePath)
+	handleError(err)
 	defer fw.Close()
 
 	// Zip writer
