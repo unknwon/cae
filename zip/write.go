@@ -24,6 +24,7 @@ import (
 )
 
 func extractFile(f *zip.File, destPath string) error {
+	fmt.Println("Unzipping file..." + f.Name)
 	// Create diretory before create file
 	os.MkdirAll(path.Join(destPath, path.Dir(f.Name)), os.ModePerm)
 
@@ -61,9 +62,16 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 	os.MkdirAll(destPath, os.ModePerm)
 
 	for _, f := range z.File {
-		fmt.Println("Unzipping file..." + f.Name)
 		// Directory.
 		if strings.HasSuffix(f.Name, "/") {
+			if isHasEntry {
+				if isEntry(f.Name, entries) {
+					fmt.Println("Unzipping file..." + f.Name)
+					os.MkdirAll(path.Join(destPath, f.Name), os.ModePerm)
+				}
+				continue
+			}
+			fmt.Println("Unzipping file..." + f.Name)
 			os.MkdirAll(path.Join(destPath, f.Name), os.ModePerm)
 			continue
 		}

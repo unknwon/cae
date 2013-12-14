@@ -24,12 +24,14 @@ import (
 // (O_RDONLY etc.) if applicable. If successful,
 // methods on the returned ZipArchive can be used for I/O.
 // If there is an error, it will be of type *PathError.
-func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) (err error) {
+func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) error {
 	if flag&os.O_CREATE != 0 {
-		_, err = os.Create(fileName)
+		f, err := os.Create(fileName)
 		if err != nil {
 			return err
 		}
+		zw := zip.NewWriter(f)
+		zw.Close()
 	}
 
 	rc, err := zip.OpenReader(fileName)
@@ -47,6 +49,7 @@ func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) (err erro
 
 	z.files = make([]*File, z.NumFiles)
 	for i, f := range rc.File {
+		z.files[i] = &File{}
 		z.files[i].FileHeader, err = zip.FileInfoHeader(f.FileInfo())
 		if err != nil {
 			return err

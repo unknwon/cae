@@ -18,6 +18,7 @@ package zip
 import (
 	"archive/zip"
 	"os"
+	"strings"
 )
 
 // File represents a file in archive.
@@ -67,4 +68,29 @@ func OpenFile(fileName string, flag int, perm os.FileMode) (zip *ZipArchive, err
 	zip = &ZipArchive{}
 	err = zip.Open(fileName, flag, perm)
 	return zip, err
+}
+
+func hasPrefix(name string, prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// ListName returns a string slice of files' name in ZipArchive.
+func (z *ZipArchive) ListName(prefixes ...string) []string {
+	isHasPrefix := len(prefixes) > 0
+	names := make([]string, 0, z.NumFiles)
+	for _, f := range z.files {
+		if isHasPrefix {
+			if hasPrefix(f.Name, prefixes) {
+				names = append(names, f.Name)
+			}
+			continue
+		}
+		names = append(names, f.Name)
+	}
+	return names
 }
