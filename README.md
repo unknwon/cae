@@ -1,8 +1,14 @@
-Compress
-========
+Compression and Archive Extensions
+==================================
 
-Package compress implements PHP-like compress operations.
+[![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/cae)
 
-### Subpackages
+Package cae implements PHP-like Compression and Archive Extensions.
 
-- Package `zip`: according to PHP:[Zip](http://www.php.net/manual/en/book.zip.php).
+But this package has some modifications depends on Go-style.
+
+Reference: [PHP:Compression and Archive Extensions](http://www.php.net/manual/en/refs.compression.php).
+
+### Implementations
+
+- Package `zip`: this package enables you to transparently read or write ZIP compressed archives and the files inside them.
