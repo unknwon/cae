@@ -25,6 +25,7 @@ type File struct {
 	*zip.FileHeader
 	oldName    string
 	oldComment string
+	absPath    string
 }
 
 // ZipArchive represents a file archive, compressed with Zip.

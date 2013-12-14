@@ -11,4 +11,4 @@ Reference: [PHP:Compression and Archive Extensions](http://www.php.net/manual/en
 
 ### Implementations
 
-- Package `zip`: this package enables you to transparently read or write ZIP compressed archives and the files inside them.
+- Package `zip`: this package enables you to transparently read or write ZIP compressed archives and the files inside them. [Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip).

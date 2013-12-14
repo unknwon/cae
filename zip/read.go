@@ -43,6 +43,7 @@ func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) (err erro
 	z.NumFiles = len(rc.File)
 	z.Flag = flag
 	z.Permission = perm
+	z.isHasChanged = false
 
 	z.files = make([]*File, z.NumFiles)
 	for i, f := range rc.File {
@@ -50,8 +51,6 @@ func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) (err erro
 		if err != nil {
 			return err
 		}
-		z.files[i].oldName = f.Name
-		z.files[i].oldComment = f.Comment
 	}
 	return nil
 }
