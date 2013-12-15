@@ -17,7 +17,9 @@ package zip
 
 import (
 	"archive/zip"
+	"io"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -48,6 +50,7 @@ type ZipArchive struct {
 // O_RDWR.
 // If there is an error, it will be of type *PathError.
 func Create(fileName string) (zip *ZipArchive, err error) {
+	os.MkdirAll(path.Dir(fileName), os.ModePerm)
 	return OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 }
 
@@ -93,4 +96,104 @@ func (z *ZipArchive) ListName(prefixes ...string) []string {
 		names = append(names, f.Name)
 	}
 	return names
+}
+
+// AddEmptyDir adds a directory entry to ZipArchive,
+// it returns false when directory already existed.
+func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
+	if !strings.HasSuffix(dirPath, "/") {
+		dirPath += "/"
+	}
+
+	for _, f := range z.files {
+		if dirPath == f.Name {
+			return false
+		}
+	}
+
+	dirPath = strings.TrimSuffix(dirPath, "/")
+	if strings.Contains(dirPath, "/") {
+		// Auto add all upper level directory.
+		tmpPath := path.Dir(dirPath)
+		z.AddEmptyDir(tmpPath)
+	}
+	z.files = append(z.files, &File{
+		FileHeader: &zip.FileHeader{
+			Name:             dirPath + "/",
+			UncompressedSize: 0,
+		},
+	})
+	z.updateStat()
+	return true
+}
+
+// AddFile adds a file entry to ZipArchive,
+func (z *ZipArchive) AddFile(fileName, absPath string) error {
+	f, err := os.Open(absPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return err
+	}
+
+	file := new(File)
+	file.FileHeader, err = zip.FileInfoHeader(fi)
+	if err != nil {
+		return err
+	}
+	file.Name = fileName
+	file.absPath = absPath
+
+	z.AddEmptyDir(path.Dir(fileName))
+
+	for _, f := range z.files {
+		if fileName == f.Name {
+			f = file
+			return nil
+		}
+	}
+	z.files = append(z.files, file)
+	z.updateStat()
+	return nil
+}
+
+func (z *ZipArchive) updateStat() {
+	z.NumFiles = len(z.files)
+	z.isHasChanged = true
+}
+
+// copy copies file from source to target path.
+// It returns false and error when error occurs in underlying functions.
+func copy(file string, to string) error {
+	sf, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer sf.Close()
+	df, err := os.Create(to)
+	if err != nil {
+		return err
+	}
+	defer df.Close()
+	// buffer reader, do chunk transfer
+	buf := make([]byte, 1024)
+	for {
+		// read a chunk
+		n, err := sf.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+		// write a chunk
+		if _, err := df.Write(buf[:n]); err != nil {
+			return err
+		}
+	}
+	return nil
 }

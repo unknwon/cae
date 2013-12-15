@@ -17,6 +17,7 @@ package zip
 import (
 	"archive/zip"
 	"os"
+	"strings"
 )
 
 // OpenFile is the generalized open call; most users will use Open
@@ -53,6 +54,10 @@ func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) error {
 		z.files[i].FileHeader, err = zip.FileInfoHeader(f.FileInfo())
 		if err != nil {
 			return err
+		}
+		z.files[i].Name = strings.Replace(f.Name, "\\", "/", -1)
+		if f.FileInfo().IsDir() && !strings.HasSuffix(z.files[i].Name, "/") {
+			z.files[i].Name += "/"
 		}
 	}
 	return nil
