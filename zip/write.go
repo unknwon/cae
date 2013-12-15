@@ -113,7 +113,8 @@ func (z *ZipArchive) Flush() error {
 
 	// Extract to tmp path and pack back.
 	tmpPath := path.Join(os.TempDir(), "cae", path.Base(z.FileName))
-	//defer os.RemoveAll(tmpPath)
+	os.RemoveAll(tmpPath)
+	defer os.RemoveAll(tmpPath)
 
 	for _, f := range z.files {
 		if strings.HasSuffix(f.Name, "/") {

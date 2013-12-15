@@ -215,6 +215,62 @@ func TestClose(t *testing.T) {
 	})
 }
 
+func TestDeleteIndex(t *testing.T) {
+	Convey("Delete an entry with given index", t, func() {
+		z, err := Create(path.Join(os.TempDir(), "testdata/TestDeleteIndex.zip"))
+		So(err, ShouldBeNil)
+
+		z.AddEmptyDir("level1/level2/level3/level4")
+
+		Convey("Delete an entry with valid index", func() {
+			err := z.DeleteIndex(3)
+			So(err, ShouldBeNil)
+			So(strings.Join(z.ListName(), " "), ShouldEqual,
+				"level1/ level1/level2/ level1/level2/level3/")
+		})
+
+		Convey("Delete an entry with invalid index", func() {
+			err := z.DeleteIndex(5)
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("Test after flush", func() {
+			err = z.Flush()
+			So(err, ShouldBeNil)
+			So(strings.Join(z.ListName(), " "), ShouldEqual,
+				"level1/ level1/level2/ level1/level2/level3/")
+		})
+	})
+}
+
+func TestDeleteName(t *testing.T) {
+	Convey("Delete an entry with given name", t, func() {
+		z, err := Create(path.Join(os.TempDir(), "testdata/TestDeleteName.zip"))
+		So(err, ShouldBeNil)
+
+		z.AddEmptyDir("level1/level2/level3/level4")
+
+		Convey("Delete an entry with valid name", func() {
+			err := z.DeleteName("level1/level2/level3/level4/")
+			So(err, ShouldBeNil)
+			So(strings.Join(z.ListName(), " "), ShouldEqual,
+				"level1/ level1/level2/ level1/level2/level3/")
+		})
+
+		Convey("Delete an entry with invalid name", func() {
+			err := z.DeleteName("level1/level2/level3/level")
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("Test after flush", func() {
+			err = z.Flush()
+			So(err, ShouldBeNil)
+			So(strings.Join(z.ListName(), " "), ShouldEqual,
+				"level1/ level1/level2/ level1/level2/level3/")
+		})
+	})
+}
+
 func Test_copy(t *testing.T) {
 	Convey("Copy file from A to B", t, func() {
 		Convey("Copy a file that does exist", func() {

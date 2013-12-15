@@ -17,6 +17,7 @@ package zip
 
 import (
 	"archive/zip"
+	"errors"
 	"io"
 	"os"
 	"path"
@@ -203,6 +204,26 @@ func (z *ZipArchive) AddFile(fileName, absPath string) error {
 	}
 	z.updateStat()
 	return nil
+}
+
+// DeleteIndex deletes an entry in the archive using its index.
+func (z *ZipArchive) DeleteIndex(index int) error {
+	if index >= z.NumFiles {
+		return errors.New("index out of range of number of files")
+	}
+
+	z.files = append(z.files[:index], z.files[index+1:]...)
+	return nil
+}
+
+// DeleteName deletes an entry in the archive using its name.
+func (z *ZipArchive) DeleteName(name string) error {
+	for i, f := range z.files {
+		if f.Name == name {
+			return z.DeleteIndex(i)
+		}
+	}
+	return errors.New("entry with given name not found")
 }
 
 func (z *ZipArchive) updateStat() {
