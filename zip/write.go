@@ -149,6 +149,9 @@ func packDir(srcPath string, recPath string, zw *zip.Writer) error {
 	}
 
 	for _, fi := range fis {
+		if globalFilter(fi.Name()) {
+			continue
+		}
 		// Append path
 		curPath := srcPath + "/" + fi.Name()
 		tmpRecPath := filepath.Join(recPath, fi.Name())

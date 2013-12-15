@@ -100,7 +100,7 @@ func TestAddDir(t *testing.T) {
 			err := z.AddDir("testdata/testdir", "testdata/testdir")
 			So(err, ShouldBeNil)
 			So(strings.Join(z.ListName(), " "), ShouldEqual,
-				"testdata/ testdata/testdir/ testdata/testdir/gophercolor16x16.png testdata/testdir/level1/ testdata/testdir/level1/bar/ testdata/testdir/level1/README.txt")
+				"testdata/ testdata/testdir/ testdata/testdir/gophercolor16x16.png testdata/testdir/level1/ testdata/testdir/level1/README.txt")
 		})
 
 		Convey("Add a dir that does not exist", func() {

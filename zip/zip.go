@@ -17,7 +17,6 @@ package zip
 
 import (
 	"archive/zip"
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -148,7 +147,6 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 	for _, fi := range fis {
 		curPath := strings.Replace(absPath+"/"+fi.Name(), "\\", "/", -1)
 		tmpRecPath := strings.Replace(filepath.Join(dirPath, fi.Name()), "\\", "/", -1)
-		fmt.Println(curPath, tmpRecPath)
 		if fi.IsDir() {
 			err = z.AddDir(tmpRecPath, curPath)
 			if err != nil {
@@ -166,6 +164,10 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 
 // AddFile adds a file entry to ZipArchive,
 func (z *ZipArchive) AddFile(fileName, absPath string) error {
+	if globalFilter(absPath) {
+		return nil
+	}
+
 	f, err := os.Open(absPath)
 	if err != nil {
 		return err
@@ -238,4 +240,11 @@ func copy(file string, to string) error {
 		}
 	}
 	return nil
+}
+
+func globalFilter(name string) bool {
+	if strings.Contains(name, ".DS_Store") {
+		return true
+	}
+	return false
 }
