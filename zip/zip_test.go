@@ -92,6 +92,20 @@ func TestAddEmptyDir(t *testing.T) {
 	})
 }
 
+func TestAddDir(t *testing.T) {
+	Convey("Open a zip file and add dir with files", t, func() {
+		z, err := zip.Create(path.Join(os.TempDir(), "testdata/TestAddDir.zip"))
+		So(err, ShouldBeNil)
+
+		Convey("Add a dir that does exist", func() {
+			err := z.AddDir("testdata/testdir", "testdata/testdir")
+			So(err, ShouldBeNil)
+			So(strings.Join(z.ListName(), " "), ShouldEqual,
+				"testdata/ testdata/testdir/ testdata/testdir/gophercolor16x16.png testdata/testdir/level1/ testdata/testdir/level1/bar/ testdata/testdir/level1/README.txt")
+		})
+	})
+}
+
 func TestAddFile(t *testing.T) {
 	Convey("Open a zip file and add files", t, func() {
 		z, err := zip.Create(path.Join(os.TempDir(), "testdata/TestAddFile.zip"))
@@ -102,6 +116,11 @@ func TestAddFile(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(strings.Join(z.ListName(), " "), ShouldEqual,
 				"testdata/ testdata/README.txt")
+		})
+
+		Convey("Add a file that does not exist", func() {
+			err := z.AddFile("testdata/README.txt", "testdata/README_404.txt")
+			So(err, ShouldNotBeNil)
 		})
 	})
 }

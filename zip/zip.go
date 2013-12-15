@@ -17,9 +17,11 @@ package zip
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -125,6 +127,41 @@ func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
 	})
 	z.updateStat()
 	return true
+}
+
+// AddFile adds a directory and subdirectories entries to ZipArchive,
+func (z *ZipArchive) AddDir(dirPath, absPath string) error {
+	dir, err := os.Open(absPath)
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	z.AddEmptyDir(dirPath)
+
+	// Get file info slice
+	fis, err := dir.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	for _, fi := range fis {
+		curPath := strings.Replace(absPath+"/"+fi.Name(), "\\", "/", -1)
+		tmpRecPath := strings.Replace(filepath.Join(dirPath, fi.Name()), "\\", "/", -1)
+		fmt.Println(curPath, tmpRecPath)
+		if fi.IsDir() {
+			err = z.AddDir(tmpRecPath, curPath)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = z.AddFile(tmpRecPath, curPath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // AddFile adds a file entry to ZipArchive,
