@@ -12,7 +12,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package zip_test
+package zip
 
 import (
 	"os"
@@ -20,21 +20,20 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Unknwon/cae/zip"
 	"github.com/Unknwon/com"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestCreate(t *testing.T) {
 	Convey("Create a zip file", t, func() {
-		_, err := zip.Create(path.Join(os.TempDir(), "testdata/TestCreate.zip"))
+		_, err := Create(path.Join(os.TempDir(), "testdata/TestCreate.zip"))
 		So(err, ShouldBeNil)
 	})
 }
 
 func TestOpen(t *testing.T) {
 	Convey("Open a zip file normally with read-only flag", t, func() {
-		z, err := zip.Open("testdata/test.zip")
+		z, err := Open("testdata/test.zip")
 		So(err, ShouldBeNil)
 		So(z.FileName, ShouldEqual, "testdata/test.zip")
 		So(z.Comment, ShouldEqual, "This is the comment for test.zip")
@@ -44,19 +43,19 @@ func TestOpen(t *testing.T) {
 	})
 
 	Convey("Open a zip file that does not exist", t, func() {
-		_, err := zip.Open("testdata/404.zip")
+		_, err := Open("testdata/404.zip")
 		So(err, ShouldNotBeNil)
 	})
 
 	Convey("Open a file that is not a zip file", t, func() {
-		_, err := zip.Open("testdata/readme.notzip")
+		_, err := Open("testdata/readme.notzip")
 		So(err, ShouldNotBeNil)
 	})
 }
 
 func TestListName(t *testing.T) {
 	Convey("Open a zip file and get list of file/dir name", t, func() {
-		z, err := zip.Open("testdata/test.zip")
+		z, err := Open("testdata/test.zip")
 		So(err, ShouldBeNil)
 
 		Convey("List name without prefix", func() {
@@ -71,7 +70,7 @@ func TestListName(t *testing.T) {
 
 func TestAddEmptyDir(t *testing.T) {
 	Convey("Open a zip file and add empty dirs", t, func() {
-		z, err := zip.Create(path.Join(os.TempDir(), "testdata/TestAddEmptyDir.zip"))
+		z, err := Create(path.Join(os.TempDir(), "testdata/TestAddEmptyDir.zip"))
 		So(err, ShouldBeNil)
 
 		Convey("Add dir that does not exist in list", func() {
@@ -94,7 +93,7 @@ func TestAddEmptyDir(t *testing.T) {
 
 func TestAddDir(t *testing.T) {
 	Convey("Open a zip file and add dir with files", t, func() {
-		z, err := zip.Create(path.Join(os.TempDir(), "testdata/TestAddDir.zip"))
+		z, err := Create(path.Join(os.TempDir(), "testdata/TestAddDir.zip"))
 		So(err, ShouldBeNil)
 
 		Convey("Add a dir that does exist", func() {
@@ -103,12 +102,22 @@ func TestAddDir(t *testing.T) {
 			So(strings.Join(z.ListName(), " "), ShouldEqual,
 				"testdata/ testdata/testdir/ testdata/testdir/gophercolor16x16.png testdata/testdir/level1/ testdata/testdir/level1/bar/ testdata/testdir/level1/README.txt")
 		})
+
+		Convey("Add a dir that does not exist", func() {
+			err := z.AddDir("testdata/testdir", "testdata/testdir404")
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("Add a dir that is a file", func() {
+			err := z.AddDir("testdata/testdir", "testdata/README.txt")
+			So(err, ShouldNotBeNil)
+		})
 	})
 }
 
 func TestAddFile(t *testing.T) {
 	Convey("Open a zip file and add files", t, func() {
-		z, err := zip.Create(path.Join(os.TempDir(), "testdata/TestAddFile.zip"))
+		z, err := Create(path.Join(os.TempDir(), "testdata/TestAddFile.zip"))
 		So(err, ShouldBeNil)
 
 		Convey("Add a file that does exist", func() {
@@ -122,12 +131,19 @@ func TestAddFile(t *testing.T) {
 			err := z.AddFile("testdata/README.txt", "testdata/README_404.txt")
 			So(err, ShouldNotBeNil)
 		})
+
+		Convey("Add a file that is exist in list", func() {
+			err := z.AddFile("testdata/README.txt", "testdata/README.txt")
+			So(err, ShouldBeNil)
+			So(strings.Join(z.ListName(), " "), ShouldEqual,
+				"testdata/ testdata/README.txt")
+		})
 	})
 }
 
 func TestExtractTo(t *testing.T) {
 	Convey("Extract a zip file to given path", t, func() {
-		z, err := zip.Open("testdata/test.zip")
+		z, err := Open("testdata/test.zip")
 		So(err, ShouldBeNil)
 
 		Convey("Extract the zip file without entries", func() {
@@ -149,7 +165,7 @@ func TestExtractTo(t *testing.T) {
 
 func TestFlush(t *testing.T) {
 	Convey("Do some operations and flush to file system", t, func() {
-		z, err := zip.Create(path.Join(os.TempDir(), "testdata/TestFlush.zip"))
+		z, err := Create(path.Join(os.TempDir(), "testdata/TestFlush.zip"))
 		So(err, ShouldBeNil)
 
 		z.AddEmptyDir("level1/level2/level3/level4")
@@ -161,11 +177,54 @@ func TestFlush(t *testing.T) {
 	})
 }
 
+func TestPackTo(t *testing.T) {
+	Convey("Pack a dir or file to zip file", t, func() {
+		Convey("Pack a dir that does exist and includir root dir", func() {
+			err := PackTo("testdata/testdir", path.Join(os.TempDir(), "testdata/testdir1.zip"), true)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Pack a dir that does exist and does not includir root dir", func() {
+			err := PackTo("testdata/testdir", path.Join(os.TempDir(), "testdata/testdir2.zip"))
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Pack a dir that does not exist and does not includir root dir", func() {
+			err := PackTo("testdata/testdir404", path.Join(os.TempDir(), "testdata/testdir3.zip"))
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("Pack a file that does exist", func() {
+			err := PackTo("testdata/README.txt", path.Join(os.TempDir(), "testdata/testdir4.zip"))
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Pack a file that does not exist", func() {
+			err := PackTo("testdata/README404.txt", path.Join(os.TempDir(), "testdata/testdir5.zip"))
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
 func TestClose(t *testing.T) {
 	Convey("Close the zip file currently operating", t, func() {
-		z, err := zip.Open("testdata/test.zip")
+		z, err := Open("testdata/test.zip")
 		So(err, ShouldBeNil)
 		err = z.Close()
 		So(err, ShouldBeNil)
+	})
+}
+
+func Test_copy(t *testing.T) {
+	Convey("Copy file from A to B", t, func() {
+		Convey("Copy a file that does exist", func() {
+			err := copy("testdata/README.txt", path.Join(os.TempDir(), "testdata/README.txt"))
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Copy a file that does not exist", func() {
+			err := copy("testdata/404.txt", path.Join(os.TempDir(), "testdata/README.txt"))
+			So(err, ShouldNotBeNil)
+		})
 	})
 }

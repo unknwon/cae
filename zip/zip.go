@@ -187,13 +187,18 @@ func (z *ZipArchive) AddFile(fileName, absPath string) error {
 
 	z.AddEmptyDir(path.Dir(fileName))
 
+	isExist := false
 	for _, f := range z.files {
 		if fileName == f.Name {
 			f = file
-			return nil
+			isExist = true
+			break
 		}
 	}
-	z.files = append(z.files, file)
+
+	if !isExist {
+		z.files = append(z.files, file)
+	}
 	z.updateStat()
 	return nil
 }

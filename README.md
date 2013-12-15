@@ -3,6 +3,8 @@ Compression and Archive Extensions
 
 [![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/cae)
 
+[中文文档](README_ZH.md)
+
 Package cae implements PHP-like Compression and Archive Extensions.
 
 But this package has some modifications depends on Go-style.
