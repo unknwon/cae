@@ -24,6 +24,8 @@ import (
 	"strings"
 )
 
+var Verbose = true
+
 func extractFile(f *zip.File, destPath string) error {
 	// Create diretory before create file
 	os.MkdirAll(path.Join(destPath, path.Dir(f.Name)), os.ModePerm)
@@ -136,7 +138,7 @@ func (z *ZipArchive) Flush() error {
 	return z.Open(z.FileName, os.O_RDWR|os.O_TRUNC, z.Permission)
 }
 
-func packDir(srcPath string, recPath string, zw *zip.Writer) error {
+func packDir(srcPath string, recPath string, zw *zip.Writer, fn func(fullName string, fi os.FileInfo) error) error {
 	dir, err := os.Open(srcPath)
 	if err != nil {
 		return err
@@ -156,20 +158,23 @@ func packDir(srcPath string, recPath string, zw *zip.Writer) error {
 		// Append path
 		curPath := srcPath + "/" + fi.Name()
 		tmpRecPath := filepath.Join(recPath, fi.Name())
+		err = fn(curPath, fi)
+		if err != nil {
+			return err
+		}
+
 		// Check it is directory or file
 		if fi.IsDir() {
-			fmt.Printf("Adding dir...%s\n", curPath)
 			err = packFile(srcPath, tmpRecPath, zw, fi)
 			if err != nil {
 				return err
 			}
 
-			err = packDir(curPath, tmpRecPath, zw)
+			err = packDir(curPath, tmpRecPath, zw, fn)
 			if err != nil {
 				return err
 			}
 		} else {
-			fmt.Printf("Adding file...%s\n", curPath)
 			err = packFile(curPath, tmpRecPath, zw, fi)
 			if err != nil {
 				return err
@@ -212,9 +217,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) er
 	return nil
 }
 
-// PackTo packs the complete archive to the specified destination.
-// Call Flush() will automatically call this in the end.
-func PackTo(srcPath, destPath string, includeDir ...bool) error {
+func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
 	fw, err := os.Create(destPath)
 	if err != nil {
 		return err
@@ -236,15 +239,46 @@ func PackTo(srcPath, destPath string, includeDir ...bool) error {
 	basePath := path.Base(srcPath)
 
 	if fi.IsDir() {
-		if len(includeDir) > 0 && includeDir[0] {
+		if includeDir {
 			packFile(srcPath, basePath, zw, fi)
 		} else {
 			basePath = ""
 		}
-		return packDir(srcPath, basePath, zw)
+		return packDir(srcPath, basePath, zw, fn)
 	}
 
 	return packFile(srcPath, basePath, zw, fi)
+}
+
+var defaultPackFunc = func(fullName string, fi os.FileInfo) error {
+	if !Verbose {
+		return nil
+	}
+
+	if fi.IsDir() {
+		fmt.Printf("Adding dir...%s\n", fullName)
+	} else {
+		fmt.Printf("Adding file...%s\n", fullName)
+	}
+
+	return nil
+}
+
+// PackTo packs the complete archive to the specified destination.
+// It accepts a function as a middleware for custom-operations.
+func PackToFunc(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir ...bool) error {
+	isIncludeDir := false
+	if len(includeDir) > 0 && includeDir[0] {
+		isIncludeDir = true
+	}
+
+	return packTo(srcPath, destPath, fn, isIncludeDir)
+}
+
+// PackTo packs the complete archive to the specified destination.
+// Call Flush() will automatically call this in the end.
+func PackTo(srcPath, destPath string, includeDir ...bool) error {
+	return PackToFunc(srcPath, destPath, defaultPackFunc, includeDir...)
 }
 
 // Close opened or created archive and save changes.
