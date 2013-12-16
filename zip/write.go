@@ -41,10 +41,7 @@ func extractFile(f *zip.File, destPath string) error {
 		return err
 	}
 	_, err = io.Copy(fw, rc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func isEntry(name string, entries []string) bool {
@@ -56,11 +53,22 @@ func isEntry(name string, entries []string) bool {
 	return false
 }
 
+var defaultExtractFunc = func(fullName string, fi os.FileInfo) error {
+	if !Verbose {
+		return nil
+	}
+
+	fmt.Println("Unzipping file..." + fullName)
+	return nil
+}
+
 // ExtractTo extracts the complete archive or the given files to the specified destination.
-// Call Flush() to apply changes before this.
-func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
+// It accepts a function as a middleware for custom-operations.
+func (z *ZipArchive) ExtractToFunc(destPath string, fn func(fullName string, fi os.FileInfo) error, entries ...string) (err error) {
 	isHasEntry := len(entries) > 0
-	fmt.Println("Unzipping " + z.FileName + "...")
+	if Verbose {
+		fmt.Println("Unzipping " + z.FileName + "...")
+	}
 	os.MkdirAll(destPath, os.ModePerm)
 
 	for _, f := range z.File {
@@ -68,12 +76,16 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 		if strings.HasSuffix(f.Name, "/") {
 			if isHasEntry {
 				if isEntry(f.Name, entries) {
-					fmt.Println("Unzipping file..." + f.Name)
+					if err := fn(f.Name, f.FileInfo()); err != nil {
+						return err
+					}
 					os.MkdirAll(path.Join(destPath, f.Name), os.ModePerm)
 				}
 				continue
 			}
-			fmt.Println("Unzipping file..." + f.Name)
+			if err := fn(f.Name, f.FileInfo()); err != nil {
+				return err
+			}
 			os.MkdirAll(path.Join(destPath, f.Name), os.ModePerm)
 			continue
 		}
@@ -81,12 +93,15 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 		// File.
 		if isHasEntry {
 			if isEntry(f.Name, entries) {
-				fmt.Println("Unzipping file..." + f.Name)
+				if err := fn(f.Name, f.FileInfo()); err != nil {
+					return err
+				}
 				err = extractFile(f, destPath)
 			}
-			continue
 		} else {
-			fmt.Println("Unzipping file..." + f.Name)
+			if err := fn(f.Name, f.FileInfo()); err != nil {
+				return err
+			}
 			err = extractFile(f, destPath)
 		}
 		if err != nil {
@@ -96,11 +111,16 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 	return nil
 }
 
+// ExtractTo extracts the complete archive or the given files to the specified destination.
+// Call Flush() to apply changes before this.
+func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
+	return z.ExtractToFunc(destPath, defaultExtractFunc, entries...)
+}
+
 func (z *ZipArchive) extractFile(f *File) error {
 	for _, zf := range z.ReadCloser.File {
 		if f.Name == zf.Name {
-			extractFile(zf, f.absPath)
-			return nil
+			return extractFile(zf, f.absPath)
 		}
 	}
 
@@ -125,14 +145,12 @@ func (z *ZipArchive) Flush() error {
 		}
 
 		f.absPath = path.Join(tmpPath, f.Name)
-		err := z.extractFile(f)
-		if err != nil {
+		if err := z.extractFile(f); err != nil {
 			return err
 		}
 	}
 
-	err := PackTo(tmpPath, z.FileName)
-	if err != nil {
+	if err := PackTo(tmpPath, z.FileName); err != nil {
 		return err
 	}
 	return z.Open(z.FileName, os.O_RDWR|os.O_TRUNC, z.Permission)
@@ -158,63 +176,54 @@ func packDir(srcPath string, recPath string, zw *zip.Writer, fn func(fullName st
 		// Append path
 		curPath := srcPath + "/" + fi.Name()
 		tmpRecPath := filepath.Join(recPath, fi.Name())
-		err = fn(curPath, fi)
-		if err != nil {
+		if err = fn(curPath, fi); err != nil {
 			return err
 		}
 
 		// Check it is directory or file
 		if fi.IsDir() {
-			err = packFile(srcPath, tmpRecPath, zw, fi)
-			if err != nil {
+			if err = packFile(srcPath, tmpRecPath, zw, fi); err != nil {
 				return err
 			}
 
 			err = packDir(curPath, tmpRecPath, zw, fn)
-			if err != nil {
-				return err
-			}
 		} else {
 			err = packFile(curPath, tmpRecPath, zw, fi)
-			if err != nil {
-				return err
-			}
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) error {
+func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (err error) {
 	if fi.IsDir() {
 		// Create zip header
 		fh := new(zip.FileHeader)
 		fh.Name = recPath + "/"
 		fh.UncompressedSize = 0
 
-		_, err := zw.CreateHeader(fh)
-		if err != nil {
-			return err
-		}
+		_, err = zw.CreateHeader(fh)
 	} else {
 		// Create zip header
 		fh := new(zip.FileHeader)
 		fh.Name = recPath
 		fh.UncompressedSize = uint32(fi.Size())
-		fw, err := zw.CreateHeader(fh)
+		var fw io.Writer
+		fw, err = zw.CreateHeader(fh)
 		if err != nil {
 			return err
 		}
 
-		f, err := os.Open(srcFile)
+		var f *os.File
+		f, err = os.Open(srcFile)
 		if err != nil {
 			return err
 		}
 		_, err = io.Copy(fw, f)
-		if err != nil {
-			return err
-		}
 	}
-	return nil
+	return err
 }
 
 func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
@@ -240,7 +249,9 @@ func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) e
 
 	if fi.IsDir() {
 		if includeDir {
-			packFile(srcPath, basePath, zw, fi)
+			if err = packFile(srcPath, basePath, zw, fi); err != nil {
+				return err
+			}
 		} else {
 			basePath = ""
 		}
@@ -283,14 +294,12 @@ func PackTo(srcPath, destPath string, includeDir ...bool) error {
 
 // Close opened or created archive and save changes.
 func (z *ZipArchive) Close() (err error) {
-	err = z.Flush()
-	if err != nil {
+	if err = z.Flush(); err != nil {
 		return err
 	}
 
 	if z.ReadCloser != nil {
-		err = z.ReadCloser.Close()
-		if err != nil {
+		if err = z.ReadCloser.Close(); err != nil {
 			return err
 		}
 		z.ReadCloser = nil

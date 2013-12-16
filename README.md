@@ -15,5 +15,9 @@ Reference: [PHP:Compression and Archive Extensions](http://www.php.net/manual/en
 
 - Package `zip`: this package enables you to transparently read or write ZIP compressed archives and the files inside them. [Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip).
 	- Features:
-		- Add file or directory from everywhere to archive, no one-to-one limitaion.
+		- Add file or directory from everywhere to archive, no one-to-one limitation.
 		- Able to extract part of entries, not all at once. 
+
+### Test cases and Coverage
+
+All subpackages use [GoConvey](http://smartystreets.github.io/goconvey/) to write test cases, and coverage is more than 85 percent.
