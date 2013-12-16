@@ -150,7 +150,9 @@ func TestExtractTo(t *testing.T) {
 			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test1"))
 			So(err, ShouldBeNil)
 			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test1"), true)
-			So(strings.Join(list, " "), ShouldEqual, "dir/ dir/bar dir/empty/ hello readonly")
+			So(err, ShouldBeNil)
+			So(com.CompareSliceStrU(list, strings.Split(
+				"dir/ dir/bar dir/empty/ hello readonly", " ")), ShouldBeTrue)
 		})
 
 		Convey("Extract the zip file with entries", func() {
@@ -158,7 +160,9 @@ func TestExtractTo(t *testing.T) {
 				"dir/", "dir/bar", "readonly")
 			So(err, ShouldBeNil)
 			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test2"), true)
-			So(strings.Join(list, " "), ShouldEqual, "dir/ dir/bar readonly")
+			So(err, ShouldBeNil)
+			So(com.CompareSliceStrU(list, strings.Split(
+				"dir/ dir/bar readonly", " ")), ShouldBeTrue)
 		})
 	})
 }
