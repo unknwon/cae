@@ -65,6 +65,7 @@ var defaultExtractFunc = func(fullName string, fi os.FileInfo) error {
 // ExtractTo extracts the complete archive or the given files to the specified destination.
 // It accepts a function as a middleware for custom-operations.
 func (z *ZipArchive) ExtractToFunc(destPath string, fn func(fullName string, fi os.FileInfo) error, entries ...string) (err error) {
+	destPath = strings.Replace(destPath, "\\", "/", -1)
 	isHasEntry := len(entries) > 0
 	if Verbose {
 		fmt.Println("Unzipping " + z.FileName + "...")
@@ -72,6 +73,8 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 	os.MkdirAll(destPath, os.ModePerm)
 
 	for _, f := range z.File {
+		f.Name = strings.Replace(f.Name, "\\", "/", -1)
+
 		// Directory.
 		if strings.HasSuffix(f.Name, "/") {
 			if isHasEntry {

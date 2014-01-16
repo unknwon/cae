@@ -131,7 +131,6 @@ func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
 
 // AddFile adds a directory and subdirectories entries to ZipArchive,
 func (z *ZipArchive) AddDir(dirPath, absPath string) error {
-	dirPath = strings.Replace(dirPath, "\\", "/", -1)
 	dir, err := os.Open(absPath)
 	if err != nil {
 		return err
