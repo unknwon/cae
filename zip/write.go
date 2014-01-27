@@ -121,9 +121,11 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 }
 
 func (z *ZipArchive) extractFile(f *File) error {
-	for _, zf := range z.ReadCloser.File {
-		if f.Name == zf.Name {
-			return extractFile(zf, f.absPath)
+	if !z.isHasWriter {
+		for _, zf := range z.ReadCloser.File {
+			if f.Name == zf.Name {
+				return extractFile(zf, f.absPath)
+			}
 		}
 	}
 
@@ -132,7 +134,7 @@ func (z *ZipArchive) extractFile(f *File) error {
 
 // Flush saves changes to original zip file if any.
 func (z *ZipArchive) Flush() error {
-	if !z.isHasChanged || z.ReadCloser == nil {
+	if !z.isHasChanged || (z.ReadCloser == nil && !z.isHasWriter) {
 		return nil
 	}
 
@@ -151,6 +153,10 @@ func (z *ZipArchive) Flush() error {
 		if err := z.extractFile(f); err != nil {
 			return err
 		}
+	}
+
+	if z.isHasWriter {
+		return packToWriter(tmpPath, z.writer, defaultPackFunc, true)
 	}
 
 	if err := PackTo(tmpPath, z.FileName); err != nil {
@@ -229,14 +235,8 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 	return err
 }
 
-func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
-	fw, err := os.Create(destPath)
-	if err != nil {
-		return err
-	}
-	defer fw.Close()
-
-	zw := zip.NewWriter(fw)
+func packToWriter(srcPath string, w io.Writer, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
+	zw := zip.NewWriter(w)
 	defer zw.Close()
 
 	f, err := os.Open(srcPath)
@@ -262,6 +262,16 @@ func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) e
 	}
 
 	return packFile(srcPath, basePath, zw, fi)
+}
+
+func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
+	fw, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer fw.Close()
+
+	return packToWriter(srcPath, fw, fn, includeDir)
 }
 
 var defaultPackFunc = func(fullName string, fi os.FileInfo) error {

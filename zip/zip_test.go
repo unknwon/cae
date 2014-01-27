@@ -15,6 +15,7 @@
 package zip
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -176,6 +177,22 @@ func TestFlush(t *testing.T) {
 		err = z.AddFile("testdata/README.txt", "testdata/README.txt")
 		So(err, ShouldBeNil)
 
+		fmt.Println("Flushing to local file system...")
+		err = z.Flush()
+		So(err, ShouldBeNil)
+	})
+
+	Convey("Do some operation and flush to io.Writer", t, func() {
+		f, err := os.Create(path.Join(os.TempDir(), "testdata/TestFlush2.zip"))
+		So(err, ShouldBeNil)
+		So(f, ShouldNotBeNil)
+
+		z := New(f)
+		z.AddEmptyDir("level1/level2/level3/level4")
+		err = z.AddFile("testdata/README.txt", "testdata/README.txt")
+		So(err, ShouldBeNil)
+
+		fmt.Println("Flushing to local io.Writer...")
 		err = z.Flush()
 		So(err, ShouldBeNil)
 	})

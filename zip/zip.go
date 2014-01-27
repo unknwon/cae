@@ -44,6 +44,10 @@ type ZipArchive struct {
 
 	files        []*File
 	isHasChanged bool
+
+	// For supporting to flush to io.Writer.
+	writer      io.Writer
+	isHasWriter bool
 }
 
 // Create creates the named zip file, truncating
@@ -73,6 +77,15 @@ func OpenFile(fileName string, flag int, perm os.FileMode) (zip *ZipArchive, err
 	zip = &ZipArchive{}
 	err = zip.Open(fileName, flag, perm)
 	return zip, err
+}
+
+// New accepts a variable that implemented interface io.Writer
+// for write-only purpose operations.
+func New(w io.Writer) (zip *ZipArchive) {
+	return &ZipArchive{
+		writer:      w,
+		isHasWriter: true,
+	}
 }
 
 func hasPrefix(name string, prefixes []string) bool {
