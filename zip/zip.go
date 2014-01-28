@@ -246,17 +246,19 @@ func (z *ZipArchive) updateStat() {
 
 // copy copies file from source to target path.
 // It returns false and error when error occurs in underlying functions.
-func copy(file string, to string) error {
-	sf, err := os.Open(file)
+func copy(destPath, srcPath string) error {
+	sf, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
 	defer sf.Close()
-	df, err := os.Create(to)
+
+	df, err := os.Create(destPath)
 	if err != nil {
 		return err
 	}
 	defer df.Close()
+
 	// buffer reader, do chunk transfer
 	buf := make([]byte, 1024)
 	for {

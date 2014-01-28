@@ -295,12 +295,12 @@ func TestDeleteName(t *testing.T) {
 func Test_copy(t *testing.T) {
 	Convey("Copy file from A to B", t, func() {
 		Convey("Copy a file that does exist", func() {
-			err := copy("testdata/README.txt", path.Join(os.TempDir(), "testdata/README.txt"))
+			err := copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/README.txt")
 			So(err, ShouldBeNil)
 		})
 
 		Convey("Copy a file that does not exist", func() {
-			err := copy("testdata/404.txt", path.Join(os.TempDir(), "testdata/README.txt"))
+			err := copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/404.txt")
 			So(err, ShouldNotBeNil)
 		})
 	})

@@ -129,7 +129,7 @@ func (z *ZipArchive) extractFile(f *File) error {
 		}
 	}
 
-	return copy(f.absPath, f.Name) // from -> to
+	return copy(f.Name, f.absPath)
 }
 
 // Flush saves changes to original zip file if any.
