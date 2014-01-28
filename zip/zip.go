@@ -253,6 +253,11 @@ func copy(destPath, srcPath string) error {
 	}
 	defer sf.Close()
 
+	si, err := sf.Stat()
+	if err != nil {
+		return err
+	}
+
 	df, err := os.Create(destPath)
 	if err != nil {
 		return err
@@ -275,7 +280,8 @@ func copy(destPath, srcPath string) error {
 			return err
 		}
 	}
-	return nil
+
+	return os.Chmod(destPath, si.Mode())
 }
 
 func globalFilter(name string) bool {
