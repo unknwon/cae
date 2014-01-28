@@ -171,11 +171,18 @@ func TestExtractTo(t *testing.T) {
 func TestFlush(t *testing.T) {
 	Convey("Do some operations and flush to file system", t, func() {
 		z, err := Create(path.Join(os.TempDir(), "testdata/TestFlush.zip"))
+		fmt.Println(path.Join(os.TempDir(), "testdata/TestFlush.zip"))
 		So(err, ShouldBeNil)
 
 		z.AddEmptyDir("level1/level2/level3/level4")
 		err = z.AddFile("testdata/README.txt", "testdata/README.txt")
 		So(err, ShouldBeNil)
+
+		// Add symbolic links.
+		// err = z.AddFile("testdata/test.lnk", "testdata/test.lnk")
+		// So(err, ShouldBeNil)
+		// err = z.AddFile("testdata/testdir.lnk", "testdata/testdir.lnk")
+		// So(err, ShouldBeNil)
 
 		fmt.Println("Flushing to local file system...")
 		err = z.Flush()
