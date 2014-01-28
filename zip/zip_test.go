@@ -195,6 +195,9 @@ func TestFlush(t *testing.T) {
 		fmt.Println("Flushing to local io.Writer...")
 		err = z.Flush()
 		So(err, ShouldBeNil)
+
+		err = z.Flush()
+		So(err, ShouldBeNil)
 	})
 }
 
