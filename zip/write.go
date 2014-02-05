@@ -86,14 +86,14 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 			if isHasEntry {
 				if isEntry(f.Name, entries) {
 					if err := fn(f.Name, f.FileInfo()); err != nil {
-						return err
+						continue
 					}
 					os.MkdirAll(path.Join(destPath, f.Name), os.ModePerm)
 				}
 				continue
 			}
 			if err := fn(f.Name, f.FileInfo()); err != nil {
-				return err
+				continue
 			}
 			os.MkdirAll(path.Join(destPath, f.Name), os.ModePerm)
 			continue
@@ -103,13 +103,13 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 		if isHasEntry {
 			if isEntry(f.Name, entries) {
 				if err := fn(f.Name, f.FileInfo()); err != nil {
-					return err
+					continue
 				}
 				err = extractFile(f, destPath)
 			}
 		} else {
 			if err := fn(f.Name, f.FileInfo()); err != nil {
-				return err
+				continue
 			}
 			err = extractFile(f, destPath)
 		}
@@ -196,7 +196,7 @@ func packDir(srcPath string, recPath string, zw *zip.Writer, fn func(fullName st
 		curPath := srcPath + "/" + fi.Name()
 		tmpRecPath := filepath.Join(recPath, fi.Name())
 		if err = fn(curPath, fi); err != nil {
-			return err
+			continue
 		}
 
 		// Check it is directory or file
