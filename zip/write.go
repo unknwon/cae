@@ -27,8 +27,9 @@ import (
 var Verbose = true
 
 func extractFile(f *zip.File, destPath string) error {
+	filePath := path.Join(destPath, f.Name)
 	// Create diretory before create file
-	os.MkdirAll(path.Join(destPath, path.Dir(f.Name)), os.ModePerm)
+	os.MkdirAll(path.Dir(filePath), os.ModePerm)
 
 	rc, err := f.Open()
 	if err != nil {
@@ -36,12 +37,17 @@ func extractFile(f *zip.File, destPath string) error {
 	}
 	defer rc.Close()
 
-	fw, _ := os.Create(path.Join(destPath, f.Name))
+	fw, _ := os.Create(filePath)
 	if err != nil {
 		return err
 	}
+
 	_, err = io.Copy(fw, rc)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(filePath, f.FileInfo().Mode())
 }
 
 func isEntry(name string, entries []string) bool {
@@ -214,7 +220,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 	if fi.IsDir() {
 		// Create zip header
 		fh := new(zip.FileHeader)
-		fh.Name = recPath + "/"
+		fh.Name = recPath+"/"
 		fh.UncompressedSize = 0
 
 		_, err = zw.CreateHeader(fh)
@@ -223,6 +229,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 		fh := new(zip.FileHeader)
 		fh.Name = recPath
 		fh.UncompressedSize = uint32(fi.Size())
+		fh.SetMode(fi.Mode())
 		var fw io.Writer
 		fw, err = zw.CreateHeader(fh)
 		if err != nil {
