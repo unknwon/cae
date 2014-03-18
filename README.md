@@ -21,3 +21,9 @@ Reference: [PHP:Compression and Archive Extensions](http://www.php.net/manual/en
 ### Test cases and Coverage
 
 All subpackages use [GoConvey](http://smartystreets.github.io/goconvey/) to write test cases, and coverage is more than 85 percent.
+
+### Use cases
+
+- [Gogs](https://github.com/gogits/gogs): GitHub-like clone in the Go Programming Language.
+- [GoBlog](https://github.com/fuxiaohei/GoBlog): personal blogging application.
+- [GoBuild](https://github.com/shxsun/gobuild/): online Go cross-platform compliation.
