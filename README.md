@@ -26,4 +26,4 @@ All subpackages use [GoConvey](http://smartystreets.github.io/goconvey/) to writ
 
 - [Gogs](https://github.com/gogits/gogs): GitHub-like clone in the Go Programming Language.
 - [GoBlog](https://github.com/fuxiaohei/GoBlog): personal blogging application.
-- [GoBuild](https://github.com/shxsun/gobuild/): online Go cross-platform compliation.
+- [GoBuild](https://github.com/shxsun/gobuild/): online Go cross-platform compilation.
