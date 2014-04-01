@@ -148,6 +148,7 @@ func TestExtractTo(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Extract the zip file without entries", func() {
+			os.RemoveAll(path.Join(os.TempDir(), "testdata/test1"))
 			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test1"))
 			So(err, ShouldBeNil)
 			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test1"), true)
@@ -157,6 +158,7 @@ func TestExtractTo(t *testing.T) {
 		})
 
 		Convey("Extract the zip file with entries", func() {
+			os.RemoveAll(path.Join(os.TempDir(), "testdata/test2"))
 			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test2"),
 				"dir/", "dir/bar", "readonly")
 			So(err, ShouldBeNil)

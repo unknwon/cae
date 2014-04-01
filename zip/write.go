@@ -37,13 +37,12 @@ func extractFile(f *zip.File, destPath string) error {
 	}
 	defer rc.Close()
 
-	fw, _ := os.Create(filePath)
+	fw, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
 
-	_, err = io.Copy(fw, rc)
-	if err != nil {
+	if _, err = io.Copy(fw, rc); err != nil {
 		return err
 	}
 
@@ -77,7 +76,6 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 		fmt.Println("Unzipping " + z.FileName + "...")
 	}
 	os.MkdirAll(destPath, os.ModePerm)
-
 	for _, f := range z.File {
 		f.Name = strings.Replace(f.Name, "\\", "/", -1)
 
@@ -220,7 +218,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 	if fi.IsDir() {
 		// Create zip header
 		fh := new(zip.FileHeader)
-		fh.Name = recPath+"/"
+		fh.Name = recPath + "/"
 		fh.UncompressedSize = 0
 
 		_, err = zw.CreateHeader(fh)
@@ -229,6 +227,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 		fh := new(zip.FileHeader)
 		fh.Name = recPath
 		fh.UncompressedSize = uint32(fi.Size())
+		fh.Method = zip.Deflate
 		fh.SetMode(fi.Mode())
 		var fw io.Writer
 		fw, err = zw.CreateHeader(fh)
