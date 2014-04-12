@@ -230,17 +230,23 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 		fh.Method = zip.Deflate
 		fh.SetMode(fi.Mode())
 		var fw io.Writer
-		fw, err = zw.CreateHeader(fh)
-		if err != nil {
+		if fw, err = zw.CreateHeader(fh); err != nil {
 			return err
 		}
 
-		var f *os.File
-		f, err = os.Open(srcFile)
-		if err != nil {
-			return err
+		if fi.Mode()&os.ModeSymlink != 0 {
+			var target string
+			if target, err = os.Readlink(srcFile); err != nil {
+				return err
+			}
+			_, err = fw.Write([]byte(target))
+		} else {
+			var f *os.File
+			if f, err = os.Open(srcFile); err != nil {
+				return err
+			}
+			_, err = io.Copy(fw, f)
 		}
-		_, err = io.Copy(fw, f)
 	}
 	return err
 }

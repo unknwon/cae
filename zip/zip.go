@@ -258,26 +258,20 @@ func copy(destPath, srcPath string) error {
 		return err
 	}
 
+	// Symbolic link.
+	if si.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(srcPath)
+		if err != nil {
+			return err
+		}
+		return os.Symlink(target, destPath)
+	}
+
 	df, err := os.Create(destPath)
 	if err != nil {
 		return err
 	}
 	defer df.Close()
-
-	// Symbolic link.
-	if si.Mode()&os.ModeSymlink != 0 {
-		// target, err := os.Readlink(srcPath)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// _, stderr, _ := com.ExecCmd("ln", "-s", target, destPath)
-		// if len(stderr) > 0 {
-		// 	return errors.New(stderr)
-		// }
-		// return nil
-		return errors.New("Go hasn't support read symbolic link itself yet!")
-	}
 
 	// buffer reader, do chunk transfer
 	buf := make([]byte, 1024)
