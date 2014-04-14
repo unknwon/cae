@@ -1,4 +1,4 @@
-// Copyright 2013 cae authors
+// Copyright 2013-2014 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -122,7 +122,7 @@ func TestAddFile(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Add a file that does exist", func() {
-			err := z.AddFile("testdata/README.txt", "testdata/README.txt")
+			err := z.AddFile("testdata/README.txt", "testdata/gophercolor16x16.png")
 			So(err, ShouldBeNil)
 			So(strings.Join(z.ListName(), " "), ShouldEqual,
 				"testdata/ testdata/README.txt")

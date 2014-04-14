@@ -1,4 +1,4 @@
-// Copyright 2013 cae authors
+// Copyright 2013-2014 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -216,33 +216,32 @@ func packDir(srcPath string, recPath string, zw *zip.Writer, fn func(fullName st
 
 func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (err error) {
 	if fi.IsDir() {
-		// Create zip header
 		fh := new(zip.FileHeader)
 		fh.Name = recPath + "/"
 		fh.UncompressedSize = 0
 
 		_, err = zw.CreateHeader(fh)
 	} else {
-		// Create zip header
-		fh := new(zip.FileHeader)
+		fh, err := zip.FileInfoHeader(fi)
+		if err != nil {
+			return err
+		}
 		fh.Name = recPath
-		fh.UncompressedSize = uint32(fi.Size())
-		fh.Method = zip.Deflate
-		fh.SetMode(fi.Mode())
-		var fw io.Writer
-		if fw, err = zw.CreateHeader(fh); err != nil {
+
+		fw, err := zw.CreateHeader(fh)
+		if err != nil {
 			return err
 		}
 
 		if fi.Mode()&os.ModeSymlink != 0 {
-			var target string
-			if target, err = os.Readlink(srcFile); err != nil {
+			target, err := os.Readlink(srcFile)
+			if err != nil {
 				return err
 			}
 			_, err = fw.Write([]byte(target))
 		} else {
-			var f *os.File
-			if f, err = os.Open(srcFile); err != nil {
+			f, err := os.Open(srcFile)
+			if err != nil {
 				return err
 			}
 			_, err = io.Copy(fw, f)
