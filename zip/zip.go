@@ -23,6 +23,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/Unknwon/cae"
 )
 
 // File represents a file in archive.
@@ -73,9 +75,9 @@ func Open(fileName string) (zip *ZipArchive, err error) {
 // (O_RDONLY etc.) if applicable. If successful,
 // methods on the returned ZipArchive can be used for I/O.
 // If there is an error, it will be of type *PathError.
-func OpenFile(fileName string, flag int, perm os.FileMode) (zip *ZipArchive, err error) {
-	zip = &ZipArchive{}
-	err = zip.Open(fileName, flag, perm)
+func OpenFile(fileName string, flag int, perm os.FileMode) (*ZipArchive, error) {
+	zip := &ZipArchive{}
+	err := zip.Open(fileName, flag, perm)
 	return zip, err
 }
 
@@ -88,22 +90,13 @@ func New(w io.Writer) (zip *ZipArchive) {
 	}
 }
 
-func hasPrefix(name string, prefixes []string) bool {
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(name, prefix) {
-			return true
-		}
-	}
-	return false
-}
-
 // ListName returns a string slice of files' name in ZipArchive.
 func (z *ZipArchive) ListName(prefixes ...string) []string {
 	isHasPrefix := len(prefixes) > 0
 	names := make([]string, 0, z.NumFiles)
 	for _, f := range z.files {
 		if isHasPrefix {
-			if hasPrefix(f.Name, prefixes) {
+			if cae.HasPrefix(f.Name, prefixes) {
 				names = append(names, f.Name)
 			}
 			continue
@@ -178,7 +171,7 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 
 // AddFile adds a file entry to ZipArchive,
 func (z *ZipArchive) AddFile(fileName, absPath string) error {
-	if globalFilter(absPath) {
+	if cae.GlobalFilter(absPath) {
 		return nil
 	}
 
@@ -242,60 +235,4 @@ func (z *ZipArchive) DeleteName(name string) error {
 func (z *ZipArchive) updateStat() {
 	z.NumFiles = len(z.files)
 	z.isHasChanged = true
-}
-
-// copy copies file from source to target path.
-// It returns false and error when error occurs in underlying functions.
-func copy(destPath, srcPath string) error {
-	sf, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer sf.Close()
-
-	si, err := os.Lstat(srcPath)
-	if err != nil {
-		return err
-	}
-
-	// Symbolic link.
-	if si.Mode()&os.ModeSymlink != 0 {
-		target, err := os.Readlink(srcPath)
-		if err != nil {
-			return err
-		}
-		return os.Symlink(target, destPath)
-	}
-
-	df, err := os.Create(destPath)
-	if err != nil {
-		return err
-	}
-	defer df.Close()
-
-	// buffer reader, do chunk transfer
-	buf := make([]byte, 1024)
-	for {
-		// read a chunk
-		n, err := sf.Read(buf)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-		// write a chunk
-		if _, err := df.Write(buf[:n]); err != nil {
-			return err
-		}
-	}
-
-	return os.Chmod(destPath, si.Mode())
-}
-
-func globalFilter(name string) bool {
-	if strings.Contains(name, ".DS_Store") {
-		return true
-	}
-	return false
 }

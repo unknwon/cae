@@ -21,6 +21,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Unknwon/cae"
 	"github.com/Unknwon/com"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -307,12 +308,12 @@ func TestDeleteName(t *testing.T) {
 func Test_copy(t *testing.T) {
 	Convey("Copy file from A to B", t, func() {
 		Convey("Copy a file that does exist", func() {
-			err := copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/README.txt")
+			err := cae.Copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/README.txt")
 			So(err, ShouldBeNil)
 		})
 
 		Convey("Copy a file that does not exist", func() {
-			err := copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/404.txt")
+			err := cae.Copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/404.txt")
 			So(err, ShouldNotBeNil)
 		})
 	})
