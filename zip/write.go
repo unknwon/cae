@@ -216,9 +216,11 @@ func packDir(srcPath string, recPath string, zw *zip.Writer, fn func(fullName st
 
 func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (err error) {
 	if fi.IsDir() {
-		fh := new(zip.FileHeader)
+		fh, err := zip.FileInfoHeader(fi)
+		if err != nil {
+			return err
+		}
 		fh.Name = recPath + "/"
-		fh.UncompressedSize = 0
 
 		_, err = zw.CreateHeader(fh)
 	} else {

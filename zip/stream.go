@@ -27,16 +27,19 @@ type StreamArchive struct {
 }
 
 // NewStreamArachive returns a new straming archive with given io.Writer.
+// It's caller's responsibility to close io.Writer after operation.
 func NewStreamArachive(writer io.Writer) *StreamArchive {
 	return &StreamArchive{zip.NewWriter(writer)}
 }
 
-// StreamFile adds a file entry to StreamArchive and writes into strram immediately.
+// StreamFile strams a file entry to StreamArchive.
 func (sr *StreamArchive) StreamFile(relPath string, fi os.FileInfo, data []byte) (err error) {
 	if fi.IsDir() {
-		fh := new(zip.FileHeader)
+		fh, err := zip.FileInfoHeader(fi)
+		if err != nil {
+			return err
+		}
 		fh.Name = relPath + "/"
-		fh.UncompressedSize = 0
 
 		_, err = sr.Writer.CreateHeader(fh)
 	} else {
@@ -55,6 +58,7 @@ func (sr *StreamArchive) StreamFile(relPath string, fi os.FileInfo, data []byte)
 	return err
 }
 
+// StreamReader streams data from io.Reader to StreamArchive.
 func (sr *StreamArchive) StreamReader(relPath string, fi os.FileInfo, reader io.Reader) (err error) {
 	fh, err := zip.FileInfoHeader(fi)
 	if err != nil {
