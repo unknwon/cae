@@ -98,12 +98,16 @@ func (tz *TzArchive) syncFiles() {
 // If there is an error, it will be of type *PathError.
 func (tz *TzArchive) Open(fileName string, flag int, perm os.FileMode) error {
 	if flag&os.O_CREATE != 0 {
-		f, err := os.Create(fileName)
+		fw, err := os.Create(fileName)
 		if err != nil {
 			return err
 		}
-		tw := tar.NewWriter(f)
+
+		gw := gzip.NewWriter(fw)
+		tw := tar.NewWriter(gw)
 		tw.Close()
+		gw.Close()
+		fw.Close()
 	}
 
 	rc, err := openReader(fileName)
