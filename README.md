@@ -18,6 +18,11 @@ Reference: [PHP:Compression and Archive Extensions](http://www.php.net/manual/en
 		- Add file or directory from everywhere to archive, no one-to-one limitation.
 		- Able to extract part of entries, not all at once. 
 
+- Package `tz`: this package enables you to transparently read or write tar.gz compressed archives and the files inside them. [Go Walker](http://gowalker.org/github.com/Unknwon/cae/tz).
+	- Features:
+		- Add file or directory from everywhere to archive, no one-to-one limitation.
+		- Able to extract part of entries, not all at once. 
+
 ### Test cases and Coverage
 
 All subpackages use [GoConvey](http://smartystreets.github.io/goconvey/) to write test cases, and coverage is more than 85 percent.
