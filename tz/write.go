@@ -64,6 +64,19 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 	}
 	os.MkdirAll(destPath, os.ModePerm)
 
+	// Copy post-added files.
+	for _, f := range tz.files {
+		if !cae.IsExist(f.absPath) {
+			continue
+		}
+
+		relPath := path.Join(destPath, f.Name)
+		os.MkdirAll(path.Dir(relPath), os.ModePerm)
+		if err := cae.Copy(relPath, f.absPath); err != nil {
+			return err
+		}
+	}
+
 	tr, f, err := openFile(tz.FileName)
 	if err != nil {
 		return err
@@ -147,43 +160,62 @@ func (tz *TzArchive) Flush() (err error) {
 	// Extract to tmp path and pack back.
 	tmpPath := path.Join(os.TempDir(), "cae", path.Base(tz.FileName))
 	os.RemoveAll(tmpPath)
+	os.MkdirAll(tmpPath, os.ModePerm)
 	defer os.RemoveAll(tmpPath)
 
-	tz.ReadCloser, err = openReader(tz.FileName)
-	if err != nil {
-		return err
-	}
-	tz.syncFiles()
-
-	tr, f, err := openFile(tz.FileName)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	i := 0
-	for {
-		h, err := tr.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		if h.Typeflag == tar.TypeDir {
-			os.MkdirAll(path.Join(tmpPath, h.Name), os.ModePerm)
+	// Copy post-added files.
+	for _, f := range tz.files {
+		if strings.HasSuffix(f.Name, "/") {
+			os.MkdirAll(path.Join(tmpPath, f.Name), os.ModePerm)
+			continue
+		} else if !cae.IsExist(f.absPath) {
 			continue
 		}
 
-		// Relative path inside zip temporary changed.
-		fileName := tz.files[i].Name
-		tz.files[i].Name = path.Join(tmpPath, fileName)
-		if err := tz.extractFile(tz.files[i], tr); err != nil {
+		relPath := path.Join(tmpPath, f.Name)
+		os.MkdirAll(path.Dir(relPath), os.ModePerm)
+		if err := cae.Copy(relPath, f.absPath); err != nil {
 			return err
 		}
-		// Change back here.
-		tz.files[i].Name = fileName
-		i++
+	}
+
+	if !tz.isHasWriter {
+		tz.ReadCloser, err = openReader(tz.FileName)
+		if err != nil {
+			return err
+		}
+		tz.syncFiles()
+
+		tr, f, err := openFile(tz.FileName)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		i := 0
+		for {
+			h, err := tr.Next()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+
+			if h.Typeflag == tar.TypeDir {
+				os.MkdirAll(path.Join(tmpPath, h.Name), os.ModePerm)
+				continue
+			}
+
+			// Relative path inside zip temporary changed.
+			fileName := tz.files[i].Name
+			tz.files[i].Name = path.Join(tmpPath, fileName)
+			if err := tz.extractFile(tz.files[i], tr); err != nil {
+				return err
+			}
+			// Change back here.
+			tz.files[i].Name = fileName
+			i++
+		}
 	}
 
 	if tz.isHasWriter {

@@ -122,5 +122,6 @@ func (tz *TzArchive) Open(fileName string, flag int, perm os.FileMode) error {
 	tz.Permission = perm
 	tz.isHasChanged = false
 
+	tz.syncFiles()
 	return nil
 }

@@ -94,3 +94,8 @@ func Copy(destPath, srcPath string) error {
 
 	return os.Chmod(destPath, si.Mode())
 }
+
+func IsExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || os.IsExist(err)
+}
