@@ -49,11 +49,6 @@ func GlobalFilter(name string) bool {
 // Copy copies file from source to target path.
 // It returns false and error when error occurs in underlying functions.
 func Copy(destPath, srcPath string) error {
-	sf, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer sf.Close()
 
 	si, err := os.Lstat(srcPath)
 	if err != nil {
@@ -68,6 +63,12 @@ func Copy(destPath, srcPath string) error {
 		}
 		return os.Symlink(target, destPath)
 	}
+
+	sf, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer sf.Close()
 
 	df, err := os.Create(destPath)
 	if err != nil {

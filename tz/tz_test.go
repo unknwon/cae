@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	// "github.com/Unknwon/com"
+	"github.com/Unknwon/com"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -33,14 +33,14 @@ func TestCreate(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	// Convey("Open a tar.gz file normally with read-only flag", t, func() {
-	// 	z, err := Open("testdata/test.tar.gz")
-	// 	So(err, ShouldBeNil)
-	// 	So(z.FileName, ShouldEqual, "testdata/test.tar.gz")
-	// 	So(z.NumFiles, ShouldEqual, 5)
-	// 	So(z.Flag, ShouldEqual, os.O_RDONLY)
-	// 	So(z.Permission, ShouldEqual, 0)
-	// })
+	Convey("Open a tar.gz file normally with read-only flag", t, func() {
+		z, err := Open("testdata/test.tar.gz")
+		So(err, ShouldBeNil)
+		So(z.FileName, ShouldEqual, "testdata/test.tar.gz")
+		So(z.NumFiles, ShouldEqual, 5)
+		So(z.Flag, ShouldEqual, os.O_RDONLY)
+		So(z.Permission, ShouldEqual, 0)
+	})
 
 	Convey("Open a tar.gz file that does not exist", t, func() {
 		_, err := Open("testdata/404.tar.gz")
@@ -53,20 +53,20 @@ func TestOpen(t *testing.T) {
 	})
 }
 
-// func TestListName(t *testing.T) {
-// 	Convey("Open a tar.gz file and get list of file/dir name", t, func() {
-// 		z, err := Open("testdata/test.tar.gz")
-// 		So(err, ShouldBeNil)
+func TestListName(t *testing.T) {
+	Convey("Open a tar.gz file and get list of file/dir name", t, func() {
+		z, err := Open("testdata/test.tar.gz")
+		So(err, ShouldBeNil)
 
-// 		Convey("List name without prefix", func() {
-// 			So(strings.Join(z.ListName(), " "), ShouldEqual, "dir/ dir/bar dir/empty/ hello readonly")
-// 		})
+		Convey("List name without prefix", func() {
+			So(com.CompareSliceStrU(z.ListName(), strings.Split("dir/ dir/bar dir/empty/ hello readonly", " ")), ShouldBeTrue)
+		})
 
-// 		Convey("List name with prefix", func() {
-// 			So(strings.Join(z.ListName("h"), " "), ShouldEqual, "hello")
-// 		})
-// 	})
-// }
+		Convey("List name with prefix", func() {
+			So(strings.Join(z.ListName("h"), " "), ShouldEqual, "hello")
+		})
+	})
+}
 
 func TestAddEmptyDir(t *testing.T) {
 	Convey("Open a tar.gz file and add empty dirs", t, func() {
@@ -141,33 +141,33 @@ func TestAddFile(t *testing.T) {
 	})
 }
 
-// func TestExtractTo(t *testing.T) {
-// 	Convey("Extract a tar.gz file to given path", t, func() {
-// 		z, err := Open("testdata/test.tar.gz")
-// 		So(err, ShouldBeNil)
+func TestExtractTo(t *testing.T) {
+	Convey("Extract a tar.gz file to given path", t, func() {
+		z, err := Open("testdata/test.tar.gz")
+		So(err, ShouldBeNil)
 
-// 		Convey("Extract the tar.gz file without entries", func() {
-// 			os.RemoveAll(path.Join(os.TempDir(), "testdata/test1"))
-// 			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test1"))
-// 			So(err, ShouldBeNil)
-// 			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test1"), true)
-// 			So(err, ShouldBeNil)
-// 			So(com.CompareSliceStrU(list, strings.Split(
-// 				"dir/ dir/bar dir/empty/ hello readonly", " ")), ShouldBeTrue)
-// 		})
+		Convey("Extract the tar.gz file without entries", func() {
+			os.RemoveAll(path.Join(os.TempDir(), "testdata/test1"))
+			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test1"))
+			So(err, ShouldBeNil)
+			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test1"), true)
+			So(err, ShouldBeNil)
+			So(com.CompareSliceStrU(list, strings.Split(
+				"dir/ dir/bar dir/empty/ hello readonly", " ")), ShouldBeTrue)
+		})
 
-// 		Convey("Extract the tar.gz file with entries", func() {
-// 			os.RemoveAll(path.Join(os.TempDir(), "testdata/test2"))
-// 			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test2"),
-// 				"dir/", "dir/bar", "readonly")
-// 			So(err, ShouldBeNil)
-// 			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test2"), true)
-// 			So(err, ShouldBeNil)
-// 			So(com.CompareSliceStrU(list, strings.Split(
-// 				"dir/ dir/bar readonly", " ")), ShouldBeTrue)
-// 		})
-// 	})
-// }
+		Convey("Extract the tar.gz file with entries", func() {
+			os.RemoveAll(path.Join(os.TempDir(), "testdata/test2"))
+			err := z.ExtractTo(path.Join(os.TempDir(), "testdata/test2"),
+				"dir/", "dir/bar", "readonly")
+			So(err, ShouldBeNil)
+			list, err := com.StatDir(path.Join(os.TempDir(), "testdata/test2"), true)
+			So(err, ShouldBeNil)
+			So(com.CompareSliceStrU(list, strings.Split(
+				"dir/ dir/bar readonly", " ")), ShouldBeTrue)
+		})
+	})
+}
 
 func TestFlush(t *testing.T) {
 	Convey("Do some operations and flush to file system", t, func() {
@@ -237,14 +237,14 @@ func TestPackTo(t *testing.T) {
 	})
 }
 
-// func TestClose(t *testing.T) {
-// 	Convey("Close the tar.gz file currently operating", t, func() {
-// 		z, err := Open("testdata/test.tar.gz")
-// 		So(err, ShouldBeNil)
-// 		err = z.Close()
-// 		So(err, ShouldBeNil)
-// 	})
-// }
+func TestClose(t *testing.T) {
+	Convey("Close the tar.gz file currently operating", t, func() {
+		z, err := Open("testdata/test.tar.gz")
+		So(err, ShouldBeNil)
+		err = z.Close()
+		So(err, ShouldBeNil)
+	})
+}
 
 func TestDeleteIndex(t *testing.T) {
 	Convey("Delete an entry with given index", t, func() {

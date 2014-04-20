@@ -174,19 +174,13 @@ func (tz *TzArchive) AddFile(fileName, absPath string) error {
 		return nil
 	}
 
-	f, err := os.Open(absPath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
+	si, err := os.Lstat(absPath)
 	if err != nil {
 		return err
 	}
 
 	target := ""
-	if fi.Mode()&os.ModeSymlink != 0 {
+	if si.Mode()&os.ModeSymlink != 0 {
 		target, err = os.Readlink(absPath)
 		if err != nil {
 			return err
@@ -194,7 +188,7 @@ func (tz *TzArchive) AddFile(fileName, absPath string) error {
 	}
 
 	file := new(File)
-	file.Header, err = tar.FileInfoHeader(fi, target)
+	file.Header, err = tar.FileInfoHeader(si, target)
 	if err != nil {
 		return err
 	}
