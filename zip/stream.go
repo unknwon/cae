@@ -48,6 +48,7 @@ func (sr *StreamArchive) StreamFile(relPath string, fi os.FileInfo, data []byte)
 			return err
 		}
 		fh.Name = filepath.Join(relPath, fi.Name())
+		fh.Method = zip.Deflate
 
 		fw, err := sr.Writer.CreateHeader(fh)
 		if err != nil {

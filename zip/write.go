@@ -221,6 +221,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) (e
 			return err
 		}
 		fh.Name = recPath
+		fh.Method = zip.Deflate
 
 		fw, err := zw.CreateHeader(fh)
 		if err != nil {
