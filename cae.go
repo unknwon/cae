@@ -1,4 +1,4 @@
-// Copyright 2013-2014 Unknown
+// Copyright 2013 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -21,6 +21,13 @@ import (
 	"strings"
 )
 
+// A Streamer describes an streamable archive object.
+type Streamer interface {
+	StreamFile(string, os.FileInfo, []byte) error
+	Close() error
+}
+
+// HasPrefix returns true if name has any string in given slice as prefix.
 func HasPrefix(name string, prefixes []string) bool {
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(name, prefix) {
@@ -30,6 +37,7 @@ func HasPrefix(name string, prefixes []string) bool {
 	return false
 }
 
+// IsEntry returns true if name equals to any string in given slice.
 func IsEntry(name string, entries []string) bool {
 	for _, e := range entries {
 		if e == name {
@@ -39,64 +47,56 @@ func IsEntry(name string, entries []string) bool {
 	return false
 }
 
-func GlobalFilter(name string) bool {
+// IsFilter returns true if given name matches any of global filter rule.
+func IsFilter(name string) bool {
 	if strings.Contains(name, ".DS_Store") {
 		return true
 	}
 	return false
 }
 
-// Copy copies file from source to target path.
-// It returns false and error when error occurs in underlying functions.
-func Copy(destPath, srcPath string) error {
-
-	si, err := os.Lstat(srcPath)
-	if err != nil {
-		return err
-	}
-
-	// Symbolic link.
-	if si.Mode()&os.ModeSymlink != 0 {
-		target, err := os.Readlink(srcPath)
-		if err != nil {
-			return err
-		}
-		return os.Symlink(target, destPath)
-	}
-
-	sf, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer sf.Close()
-
-	df, err := os.Create(destPath)
-	if err != nil {
-		return err
-	}
-	defer df.Close()
-
-	// buffer reader, do chunk transfer
-	buf := make([]byte, 1024)
-	for {
-		// read a chunk
-		n, err := sf.Read(buf)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-		// write a chunk
-		if _, err := df.Write(buf[:n]); err != nil {
-			return err
-		}
-	}
-
-	return os.Chmod(destPath, si.Mode())
-}
-
+// IsExist returns true if given path is a file or directory.
 func IsExist(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)
+}
+
+// Copy copies file from source to target path.
+func Copy(dest, src string) error {
+	// Gather file information to reset back later.
+	si, err := os.Lstat(src)
+	if err != nil {
+		return err
+	}
+
+	// Handle symbolic link.
+	if si.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(src)
+		if err != nil {
+			return err
+		}
+		// NOTE: os.Chmod and os.Chtimes don't recoganize symbolic link,
+		// which will lead "no such file or directory" error.
+		return os.Symlink(target, dest)
+	}
+
+	sr, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sr.Close()
+
+	dw, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer dw.Close()
+
+	if _, err = io.Copy(dw, sr); err != nil {
+		return err
+	}
+	if err = os.Chtimes(dest, si.ModTime(), si.ModTime()); err != nil {
+		return err
+	}
+	return os.Chmod(dest, si.Mode())
 }

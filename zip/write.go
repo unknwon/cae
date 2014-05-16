@@ -179,7 +179,7 @@ func packDir(srcPath string, recPath string, zw *zip.Writer, fn func(fullName st
 	}
 
 	for _, fi := range fis {
-		if cae.GlobalFilter(fi.Name()) {
+		if cae.IsFilter(fi.Name()) {
 			continue
 		}
 		// Append path

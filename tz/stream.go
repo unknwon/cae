@@ -1,4 +1,4 @@
-// Copyright 2013 Unknown
+// Copyright 2014 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -12,10 +12,11 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package zip
+package tz
 
 import (
-	"archive/zip"
+	"archive/tar"
+	"compress/gzip"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,54 +24,66 @@ import (
 
 // StreamArchive represents a streaming archive.
 type StreamArchive struct {
-	*zip.Writer
+	*tar.Writer
+	gw *gzip.Writer
+}
+
+func (s *StreamArchive) Close() (err error) {
+	if err = s.Writer.Close(); err != nil {
+		return err
+	}
+	return s.gw.Close()
 }
 
 // NewStreamArachive returns a new straming archive with given io.Writer.
 // It's caller's responsibility to close io.Writer after operation.
 func NewStreamArachive(writer io.Writer) *StreamArchive {
-	return &StreamArchive{zip.NewWriter(writer)}
+	s := &StreamArchive{}
+	s.gw = gzip.NewWriter(writer)
+	s.Writer = tar.NewWriter(s.gw)
+	return s
 }
 
 // StreamFile strams a file entry to StreamArchive.
 func (sr *StreamArchive) StreamFile(relPath string, fi os.FileInfo, data []byte) (err error) {
 	if fi.IsDir() {
-		fh, err := zip.FileInfoHeader(fi)
+		fh, err := tar.FileInfoHeader(fi, "")
 		if err != nil {
 			return err
 		}
 		fh.Name = relPath + "/"
 
-		_, err = sr.Writer.CreateHeader(fh)
+		err = sr.Writer.WriteHeader(fh)
 	} else {
-		fh, err := zip.FileInfoHeader(fi)
+		target := ""
+		if fi.Mode()&os.ModeSymlink != 0 {
+			target = string(data)
+		}
+
+		fh, err := tar.FileInfoHeader(fi, target)
 		if err != nil {
 			return err
 		}
 		fh.Name = filepath.Join(relPath, fi.Name())
-		fh.Method = zip.Deflate
-
-		fw, err := sr.Writer.CreateHeader(fh)
-		if err != nil {
+		if err = sr.Writer.WriteHeader(fh); err != nil {
 			return err
 		}
-		_, err = fw.Write(data)
+
+		_, err = sr.Writer.Write(data)
 	}
 	return err
 }
 
 // StreamReader streams data from io.Reader to StreamArchive.
 func (sr *StreamArchive) StreamReader(relPath string, fi os.FileInfo, reader io.Reader) (err error) {
-	fh, err := zip.FileInfoHeader(fi)
+	fh, err := tar.FileInfoHeader(fi, "")
 	if err != nil {
 		return err
 	}
 	fh.Name = filepath.Join(relPath, fi.Name())
-
-	fw, err := sr.Writer.CreateHeader(fh)
-	if err != nil {
+	if err = sr.Writer.WriteHeader(fh); err != nil {
 		return err
 	}
-	_, err = io.Copy(fw, reader)
+	_, err = io.Copy(sr.Writer, reader)
 	return err
 }

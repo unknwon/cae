@@ -171,7 +171,7 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 
 // AddFile adds a file entry to ZipArchive,
 func (z *ZipArchive) AddFile(fileName, absPath string) error {
-	if cae.GlobalFilter(absPath) {
+	if cae.IsFilter(absPath) {
 		return nil
 	}
 

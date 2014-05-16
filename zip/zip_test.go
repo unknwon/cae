@@ -1,4 +1,4 @@
-// Copyright 2013-2014 Unknown
+// Copyright 2013 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -304,11 +304,13 @@ func TestDeleteName(t *testing.T) {
 	})
 }
 
-func Test_copy(t *testing.T) {
+func TestCopy(t *testing.T) {
 	Convey("Copy file from A to B", t, func() {
 		Convey("Copy a file that does exist", func() {
-			err := cae.Copy(path.Join(os.TempDir(), "testdata/README.txt"), "testdata/README.txt")
+			tmpPath := path.Join(os.TempDir(), "testdata/README.txt")
+			err := cae.Copy(tmpPath, "testdata/README.txt")
 			So(err, ShouldBeNil)
+			So(cae.IsExist(tmpPath), ShouldBeTrue)
 		})
 
 		Convey("Copy a file that does not exist", func() {

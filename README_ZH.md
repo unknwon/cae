@@ -11,16 +11,13 @@
 
 ### 实现
 
-- 包 `zip`：本包允许你轻易的读取或写入 ZIP 压缩档案和其内部文件。[Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip).
-	- 特性：
-		- 允许将任意位置的文件或目录加入档案，没有一对一的操作限制。
-		- 允许只解压部分文件，而非一次性解压全部。 
+包 `zip`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip)) 和 `tz`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/tz)) 都允许你轻易的读取或写入 ZIP/TAR.GZ 压缩档案和其内部文件。
 
-- 包 `tz`：本包允许你轻易的读取或写入 tar.gz 压缩档案和其内部文件。[Go Walker](http://gowalker.org/github.com/Unknwon/cae/tz).
-	- 特性：
-		- 允许将任意位置的文件或目录加入档案，没有一对一的操作限制。
-		- 允许只解压部分文件，而非一次性解压全部。 
+- 特性：
+	- 将任意位置的文件或目录加入档案，没有一对一的操作限制。
+	- 只解压部分文件，而非一次性解压全部。 
+	- 将数据以流的形式直接写入 `io.Writer` 而不需经过文件系统的存储。
 
 ### 测试用例与覆盖率
 
-所有子包均采用 [GoConvey](http://smartystreets.github.io/goconvey/) 来书写测试用例，覆盖率均超过百分之 85。
+所有子包均采用 [GoConvey](http://goconvey.co/) 来书写测试用例，覆盖率均超过百分之 85。

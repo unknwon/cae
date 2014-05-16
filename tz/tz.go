@@ -17,8 +17,6 @@ package tz
 
 import (
 	"archive/tar"
-	// "compress/gzip"
-	// "fmt"
 	"errors"
 	"io"
 	"os"
@@ -170,7 +168,7 @@ func (tz *TzArchive) AddDir(dirPath, absPath string) error {
 
 // AddFile adds a file entry to TzArchive,
 func (tz *TzArchive) AddFile(fileName, absPath string) error {
-	if cae.GlobalFilter(absPath) {
+	if cae.IsFilter(absPath) {
 		return nil
 	}
 
