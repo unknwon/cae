@@ -22,7 +22,7 @@ Package `zip`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip)) and `
 
 ### Test cases and Coverage
 
-All subpackages use [GoConvey](http://goconvey.co/) to write test cases, and coverage is more than 85 percent.
+All subpackages use [GoConvey](http://goconvey.co/) to write test cases, and coverage is more than 80 percent.
 
 ### Use cases
 

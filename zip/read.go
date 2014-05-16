@@ -1,4 +1,4 @@
-// Copyright 2013-2014 Unknown
+// Copyright 2013 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -25,23 +25,26 @@ import (
 // (O_RDONLY etc.) if applicable. If successful,
 // methods on the returned ZipArchive can be used for I/O.
 // If there is an error, it will be of type *PathError.
-func (z *ZipArchive) Open(fileName string, flag int, perm os.FileMode) error {
+func (z *ZipArchive) Open(name string, flag int, perm os.FileMode) error {
+	// Create a new archive if it's specified and not exist.
 	if flag&os.O_CREATE != 0 {
-		f, err := os.Create(fileName)
+		f, err := os.Create(name)
 		if err != nil {
 			return err
 		}
 		zw := zip.NewWriter(f)
-		zw.Close()
+		if err = zw.Close(); err != nil {
+			return err
+		}
 	}
 
-	rc, err := zip.OpenReader(fileName)
+	rc, err := zip.OpenReader(name)
 	if err != nil {
 		return err
 	}
 
 	z.ReadCloser = rc
-	z.FileName = fileName
+	z.FileName = name
 	z.Comment = rc.Comment
 	z.NumFiles = len(rc.File)
 	z.Flag = flag

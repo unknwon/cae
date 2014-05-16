@@ -12,7 +12,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package zip
+package tz
 
 import (
 	"os"
@@ -24,7 +24,7 @@ import (
 
 func TestStream(t *testing.T) {
 	Convey("Create a stream archive", t, func() {
-		fw, err := os.Create(path.Join(os.TempDir(), "testdata/TestStream.zip"))
+		fw, err := os.Create(path.Join(os.TempDir(), "testdata/TestStream.tar.gz"))
 		So(err, ShouldBeNil)
 		s := NewStreamArachive(fw)
 

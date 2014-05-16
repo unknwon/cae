@@ -1,4 +1,4 @@
-// Copyright 2013-2014 Unknown
+// Copyright 2013 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -27,15 +27,15 @@ import (
 	"github.com/Unknwon/cae"
 )
 
-// File represents a file in archive.
+// A File represents a file or directory entry in archive.
 type File struct {
 	*zip.FileHeader
-	oldName    string
-	oldComment string
-	absPath    string
+	oldName    string // NOTE: unused, for future change name feature.
+	oldComment string // NOTE: unused, for future change comment feature.
+	absPath    string // Absolute path of local file system.
 }
 
-// ZipArchive represents a file archive, compressed with Zip.
+// A ZipArchive represents a file archive, compressed with Zip.
 type ZipArchive struct {
 	*zip.ReadCloser
 	FileName   string
@@ -47,7 +47,7 @@ type ZipArchive struct {
 	files        []*File
 	isHasChanged bool
 
-	// For supporting to flush to io.Writer.
+	// For supporting flushing to io.Writer.
 	writer      io.Writer
 	isHasWriter bool
 }
@@ -57,17 +57,17 @@ type ZipArchive struct {
 // ZipArchive can be used for I/O; the associated file descriptor has mode
 // O_RDWR.
 // If there is an error, it will be of type *PathError.
-func Create(fileName string) (zip *ZipArchive, err error) {
-	os.MkdirAll(path.Dir(fileName), os.ModePerm)
-	return OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+func Create(name string) (*ZipArchive, error) {
+	os.MkdirAll(path.Dir(name), os.ModePerm)
+	return OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 }
 
-// Open opens the named zip file for reading.  If successful, methods on
+// Open opens the named zip file for reading. If successful, methods on
 // the returned ZipArchive can be used for reading; the associated file
 // descriptor has mode O_RDONLY.
 // If there is an error, it will be of type *PathError.
-func Open(fileName string) (zip *ZipArchive, err error) {
-	return OpenFile(fileName, os.O_RDONLY, 0)
+func Open(name string) (*ZipArchive, error) {
+	return OpenFile(name, os.O_RDONLY, 0)
 }
 
 // OpenFile is the generalized open call; most users will use Open
@@ -75,30 +75,28 @@ func Open(fileName string) (zip *ZipArchive, err error) {
 // (O_RDONLY etc.) if applicable. If successful,
 // methods on the returned ZipArchive can be used for I/O.
 // If there is an error, it will be of type *PathError.
-func OpenFile(fileName string, flag int, perm os.FileMode) (*ZipArchive, error) {
-	zip := &ZipArchive{}
-	err := zip.Open(fileName, flag, perm)
-	return zip, err
+func OpenFile(name string, flag int, perm os.FileMode) (*ZipArchive, error) {
+	z := new(ZipArchive)
+	err := z.Open(name, flag, perm)
+	return z, err
 }
 
 // New accepts a variable that implemented interface io.Writer
 // for write-only purpose operations.
-func New(w io.Writer) (zip *ZipArchive) {
+func New(w io.Writer) *ZipArchive {
 	return &ZipArchive{
 		writer:      w,
 		isHasWriter: true,
 	}
 }
 
-// ListName returns a string slice of files' name in ZipArchive.
-func (z *ZipArchive) ListName(prefixes ...string) []string {
+// List returns a string slice of files' name in ZipArchive.
+// Specify prefixes will be used as filters.
+func (z *ZipArchive) List(prefixes ...string) []string {
 	isHasPrefix := len(prefixes) > 0
 	names := make([]string, 0, z.NumFiles)
 	for _, f := range z.files {
-		if isHasPrefix {
-			if cae.HasPrefix(f.Name, prefixes) {
-				names = append(names, f.Name)
-			}
+		if isHasPrefix && !cae.HasPrefix(f.Name, prefixes) {
 			continue
 		}
 		names = append(names, f.Name)
@@ -106,8 +104,8 @@ func (z *ZipArchive) ListName(prefixes ...string) []string {
 	return names
 }
 
-// AddEmptyDir adds a directory entry to ZipArchive,
-// it returns false when directory already existed.
+// AddEmptyDir adds a raw directory entry to ZipArchive,
+// it returns false if same directory enry already existed.
 func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
 	if !strings.HasSuffix(dirPath, "/") {
 		dirPath += "/"
@@ -121,9 +119,8 @@ func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
 
 	dirPath = strings.TrimSuffix(dirPath, "/")
 	if strings.Contains(dirPath, "/") {
-		// Auto add all upper level directory.
-		tmpPath := path.Dir(dirPath)
-		z.AddEmptyDir(tmpPath)
+		// Auto add all upper level directories.
+		z.AddEmptyDir(path.Dir(dirPath))
 	}
 	z.files = append(z.files, &File{
 		FileHeader: &zip.FileHeader{
@@ -135,7 +132,7 @@ func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
 	return true
 }
 
-// AddFile adds a directory and subdirectories entries to ZipArchive,
+// AddDir adds a directory and subdirectories entries to ZipArchive.
 func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 	dir, err := os.Open(absPath)
 	if err != nil {
@@ -143,25 +140,22 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 	}
 	defer dir.Close()
 
+	// Make sure we have all upper level directories.
 	z.AddEmptyDir(dirPath)
 
-	// Get file info slice
 	fis, err := dir.Readdir(0)
 	if err != nil {
 		return err
 	}
-
 	for _, fi := range fis {
 		curPath := strings.Replace(absPath+"/"+fi.Name(), "\\", "/", -1)
 		tmpRecPath := strings.Replace(filepath.Join(dirPath, fi.Name()), "\\", "/", -1)
 		if fi.IsDir() {
-			err = z.AddDir(tmpRecPath, curPath)
-			if err != nil {
+			if err = z.AddDir(tmpRecPath, curPath); err != nil {
 				return err
 			}
 		} else {
-			err = z.AddFile(tmpRecPath, curPath)
-			if err != nil {
+			if err = z.AddFile(tmpRecPath, curPath); err != nil {
 				return err
 			}
 		}
@@ -169,7 +163,7 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 	return nil
 }
 
-// AddFile adds a file entry to ZipArchive,
+// AddFile adds a file entry to ZipArchive.
 func (z *ZipArchive) AddFile(fileName, absPath string) error {
 	if cae.IsFilter(absPath) {
 		return nil
@@ -204,25 +198,25 @@ func (z *ZipArchive) AddFile(fileName, absPath string) error {
 			break
 		}
 	}
-
 	if !isExist {
 		z.files = append(z.files, file)
 	}
+
 	z.updateStat()
 	return nil
 }
 
-// DeleteIndex deletes an entry in the archive using its index.
-func (z *ZipArchive) DeleteIndex(index int) error {
-	if index >= z.NumFiles {
+// DeleteIndex deletes an entry in the archive by its index.
+func (z *ZipArchive) DeleteIndex(idx int) error {
+	if idx >= z.NumFiles {
 		return errors.New("index out of range of number of files")
 	}
 
-	z.files = append(z.files[:index], z.files[index+1:]...)
+	z.files = append(z.files[:idx], z.files[idx+1:]...)
 	return nil
 }
 
-// DeleteName deletes an entry in the archive using its name.
+// DeleteName deletes an entry in the archive by its name.
 func (z *ZipArchive) DeleteName(name string) error {
 	for i, f := range z.files {
 		if f.Name == name {
@@ -232,6 +226,7 @@ func (z *ZipArchive) DeleteName(name string) error {
 	return errors.New("entry with given name not found")
 }
 
+// updateStat should be called after every change for rebuilding statistic.
 func (z *ZipArchive) updateStat() {
 	z.NumFiles = len(z.files)
 	z.isHasChanged = true

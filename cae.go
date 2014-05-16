@@ -27,6 +27,10 @@ type Streamer interface {
 	Close() error
 }
 
+
+// A HookFunc represents a middleware for packing and extracting archive.
+type HookFunc func(string, os.FileInfo) error
+
 // HasPrefix returns true if name has any string in given slice as prefix.
 func HasPrefix(name string, prefixes []string) bool {
 	for _, prefix := range prefixes {
@@ -63,7 +67,7 @@ func IsExist(path string) bool {
 
 // Copy copies file from source to target path.
 func Copy(dest, src string) error {
-	// Gather file information to reset back later.
+	// Gather file information to set back later.
 	si, err := os.Lstat(src)
 	if err != nil {
 		return err
@@ -95,6 +99,8 @@ func Copy(dest, src string) error {
 	if _, err = io.Copy(dw, sr); err != nil {
 		return err
 	}
+
+	// Set back file information.
 	if err = os.Chtimes(dest, si.ModTime(), si.ModTime()); err != nil {
 		return err
 	}

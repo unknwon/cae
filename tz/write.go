@@ -1,4 +1,4 @@
-// Copyright 2013 Unknown
+// Copyright 2014 Unknown
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -27,8 +27,10 @@ import (
 	"github.com/Unknwon/cae"
 )
 
+// Switcher of printing trace information when pack and extract.
 var Verbose = true
 
+// extractFile extracts zip.File to file system.
 func extractFile(f *tar.Header, tr *tar.Reader, destPath string) error {
 	filePath := path.Join(destPath, f.Name)
 	os.MkdirAll(path.Dir(filePath), os.ModePerm)
@@ -37,11 +39,16 @@ func extractFile(f *tar.Header, tr *tar.Reader, destPath string) error {
 	if err != nil {
 		return err
 	}
+	defer fw.Close()
 
 	if _, err = io.Copy(fw, tr); err != nil {
 		return err
 	}
 
+	// Skip symbolic links.
+	if f.FileInfo().Mode()&os.ModeSymlink != 0 {
+		return nil
+	}
 	return os.Chmod(filePath, f.FileInfo().Mode())
 }
 
@@ -50,13 +57,14 @@ var defaultExtractFunc = func(fullName string, fi os.FileInfo) error {
 		return nil
 	}
 
-	fmt.Println("Unzipping file..." + fullName)
+	fmt.Println("Extracting file..." + fullName)
 	return nil
 }
 
-// ExtractTo extracts the complete archive or the given files to the specified destination.
-// It accepts a function as a middleware for custom-operations.
-func (tz *TzArchive) ExtractToFunc(destPath string, fn func(fullName string, fi os.FileInfo) error, entries ...string) (err error) {
+// ExtractTo extracts the whole archive or the given files to the
+// specified destination.
+// It accepts a function as a middleware for custom operations.
+func (tz *TzArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...string) (err error) {
 	destPath = strings.Replace(destPath, "\\", "/", -1)
 	isHasEntry := len(entries) > 0
 	if Verbose {
@@ -97,14 +105,14 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 		if h.Typeflag == tar.TypeDir {
 			if isHasEntry {
 				if cae.IsEntry(h.Name, entries) {
-					if err := fn(h.Name, h.FileInfo()); err != nil {
+					if err = fn(h.Name, h.FileInfo()); err != nil {
 						continue
 					}
 					os.MkdirAll(path.Join(destPath, h.Name), os.ModePerm)
 				}
 				continue
 			}
-			if err := fn(h.Name, h.FileInfo()); err != nil {
+			if err = fn(h.Name, h.FileInfo()); err != nil {
 				continue
 			}
 			os.MkdirAll(path.Join(destPath, h.Name), os.ModePerm)
@@ -114,13 +122,13 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 		// File.
 		if isHasEntry {
 			if cae.IsEntry(h.Name, entries) {
-				if err := fn(h.Name, h.FileInfo()); err != nil {
+				if err = fn(h.Name, h.FileInfo()); err != nil {
 					continue
 				}
 				err = extractFile(h, tr, destPath)
 			}
 		} else {
-			if err := fn(h.Name, h.FileInfo()); err != nil {
+			if err = fn(h.Name, h.FileInfo()); err != nil {
 				continue
 			}
 			err = extractFile(h, tr, destPath)
@@ -129,16 +137,17 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn func(fullName string, fi 
 			return err
 		}
 	}
-
 	return nil
 }
 
-// ExtractTo extracts the complete archive or the given files to the specified destination.
+// ExtractTo extracts the whole archive or the given files to the
+// specified destination.
 // Call Flush() to apply changes before this.
 func (tz *TzArchive) ExtractTo(destPath string, entries ...string) (err error) {
 	return tz.ExtractToFunc(destPath, defaultExtractFunc, entries...)
 }
 
+// extractFile extracts file from TzArchive to file system.
 func (tz *TzArchive) extractFile(f *File, tr *tar.Reader) error {
 	if !tz.isHasWriter {
 		for _, h := range tz.ReadCloser.File {
@@ -228,7 +237,9 @@ func (tz *TzArchive) Flush() (err error) {
 	return tz.Open(tz.FileName, os.O_RDWR|os.O_TRUNC, tz.Permission)
 }
 
-func packDir(srcPath string, recPath string, tw *tar.Writer, fn func(fullName string, fi os.FileInfo) error) error {
+// packDir packs a directory and its subdirectories and files
+// recursively to zip.Writer.
+func packDir(srcPath string, recPath string, tw *tar.Writer, fn cae.HookFunc) error {
 	dir, err := os.Open(srcPath)
 	if err != nil {
 		return err
@@ -269,6 +280,7 @@ func packDir(srcPath string, recPath string, tw *tar.Writer, fn func(fullName st
 	return nil
 }
 
+// packFile packs a file or directory to tar.Writer.
 func packFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) (err error) {
 	if fi.IsDir() {
 		h, err := tar.FileInfoHeader(fi, "")
@@ -277,7 +289,9 @@ func packFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) (e
 		}
 		h.Name = recPath + "/"
 
-		err = tw.WriteHeader(h)
+		if err = tw.WriteHeader(h); err != nil {
+			return err
+		}
 	} else {
 		target := ""
 		if fi.Mode()&os.ModeSymlink != 0 {
@@ -297,19 +311,20 @@ func packFile(srcFile string, recPath string, tw *tar.Writer, fi os.FileInfo) (e
 			return err
 		}
 
-		if len(target) > 0 {
-			_, err = tw.Write([]byte(target))
-		} else {
+		if len(target) == 0 {
 			f, err := os.Open(srcFile)
 			if err != nil {
 				return err
 			}
-			_, err = io.Copy(tw, f)
+			if _, err = io.Copy(tw, f); err != nil {
+				return err
+			}
 		}
 	}
-	return err
+	return nil
 }
 
+// packToWriter packs given path object to io.Writer.
 func packToWriter(srcPath string, w io.Writer, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
 	gw := gzip.NewWriter(w)
 	defer gw.Close()
@@ -342,7 +357,8 @@ func packToWriter(srcPath string, w io.Writer, fn func(fullName string, fi os.Fi
 	return packFile(srcPath, basePath, tw, fi)
 }
 
-func packTo(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir bool) error {
+// packTo packs given source path object to target path.
+func packTo(srcPath, destPath string, fn cae.HookFunc, includeDir bool) error {
 	fw, err := os.Create(destPath)
 	if err != nil {
 		return err
@@ -362,12 +378,11 @@ var defaultPackFunc = func(fullName string, fi os.FileInfo) error {
 	} else {
 		fmt.Printf("Adding file...%s\n", fullName)
 	}
-
 	return nil
 }
 
-// PackTo packs the complete archive to the specified destination.
-// It accepts a function as a middleware for custom-operations.
+// PackToFunc packs the complete archive to the specified destination.
+// It accepts a function as a middleware for custom operations.
 func PackToFunc(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir ...bool) error {
 	isIncludeDir := false
 	if len(includeDir) > 0 && includeDir[0] {
@@ -377,13 +392,13 @@ func PackToFunc(srcPath, destPath string, fn func(fullName string, fi os.FileInf
 	return packTo(srcPath, destPath, fn, isIncludeDir)
 }
 
-// PackTo packs the complete archive to the specified destination.
+// PackTo packs the whole archive to the specified destination.
 // Call Flush() will automatically call this in the end.
 func PackTo(srcPath, destPath string, includeDir ...bool) error {
 	return PackToFunc(srcPath, destPath, defaultPackFunc, includeDir...)
 }
 
-// Close opened or created archive and save changes.
+// Close opens or creates archive and save changes.
 func (z *TzArchive) Close() (err error) {
 	if err = z.Flush(); err != nil {
 		return err

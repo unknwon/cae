@@ -20,4 +20,4 @@
 
 ### 测试用例与覆盖率
 
-所有子包均采用 [GoConvey](http://goconvey.co/) 来书写测试用例，覆盖率均超过百分之 85。
+所有子包均采用 [GoConvey](http://goconvey.co/) 来书写测试用例，覆盖率均超过 80%。
