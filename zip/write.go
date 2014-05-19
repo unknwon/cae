@@ -174,44 +174,6 @@ func (z *ZipArchive) Flush() error {
 	return z.Open(z.FileName, os.O_RDWR|os.O_TRUNC, z.Permission)
 }
 
-// packDir packs a directory and its subdirectories and files
-// recursively to zip.Writer.
-func packDir(srcPath string, recPath string, zw *zip.Writer, fn cae.HookFunc) error {
-	dir, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer dir.Close()
-
-	fis, err := dir.Readdir(0)
-	if err != nil {
-		return err
-	}
-	for _, fi := range fis {
-		if cae.IsFilter(fi.Name()) {
-			continue
-		}
-		curPath := srcPath + "/" + fi.Name()
-		tmpRecPath := filepath.Join(recPath, fi.Name())
-		if err = fn(curPath, fi); err != nil {
-			continue
-		}
-
-		if fi.IsDir() {
-			if err = packFile(srcPath, tmpRecPath, zw, fi); err != nil {
-				return err
-			}
-			err = packDir(curPath, tmpRecPath, zw, fn)
-		} else {
-			err = packFile(curPath, tmpRecPath, zw, fi)
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // packFile packs a file or directory to zip.Writer.
 func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) error {
 	if fi.IsDir() {
@@ -252,6 +214,44 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) er
 			if _, err = io.Copy(fw, f); err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+// packDir packs a directory and its subdirectories and files
+// recursively to zip.Writer.
+func packDir(srcPath string, recPath string, zw *zip.Writer, fn cae.HookFunc) error {
+	dir, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	fis, err := dir.Readdir(0)
+	if err != nil {
+		return err
+	}
+	for _, fi := range fis {
+		if cae.IsFilter(fi.Name()) {
+			continue
+		}
+		curPath := srcPath + "/" + fi.Name()
+		tmpRecPath := filepath.Join(recPath, fi.Name())
+		if err = fn(curPath, fi); err != nil {
+			continue
+		}
+
+		if fi.IsDir() {
+			if err = packFile(srcPath, tmpRecPath, zw, fi); err != nil {
+				return err
+			}
+			err = packDir(curPath, tmpRecPath, zw, fn)
+		} else {
+			err = packFile(curPath, tmpRecPath, zw, fi)
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -298,6 +298,16 @@ func packTo(srcPath, destPath string, fn cae.HookFunc, includeDir bool) error {
 	return packToWriter(srcPath, fw, fn, includeDir)
 }
 
+// PackToFunc packs the complete archive to the specified destination.
+// It accepts a function as a middleware for custom operations.
+func PackToFunc(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir ...bool) error {
+	isIncludeDir := false
+	if len(includeDir) > 0 && includeDir[0] {
+		isIncludeDir = true
+	}
+	return packTo(srcPath, destPath, fn, isIncludeDir)
+}
+
 var defaultPackFunc = func(fullName string, fi os.FileInfo) error {
 	if !Verbose {
 		return nil
@@ -309,16 +319,6 @@ var defaultPackFunc = func(fullName string, fi os.FileInfo) error {
 		fmt.Printf("Adding file...%s\n", fullName)
 	}
 	return nil
-}
-
-// PackToFunc packs the complete archive to the specified destination.
-// It accepts a function as a middleware for custom operations.
-func PackToFunc(srcPath, destPath string, fn func(fullName string, fi os.FileInfo) error, includeDir ...bool) error {
-	isIncludeDir := false
-	if len(includeDir) > 0 && includeDir[0] {
-		isIncludeDir = true
-	}
-	return packTo(srcPath, destPath, fn, isIncludeDir)
 }
 
 // PackTo packs the whole archive to the specified destination.

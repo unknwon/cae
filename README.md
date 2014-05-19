@@ -11,6 +11,8 @@ But this package has some modifications depends on Go-style.
 
 Reference: [PHP:Compression and Archive Extensions](http://www.php.net/manual/en/refs.compression.php).
 
+Code Convention: based on [Go Code Convention](https://github.com/Unknwon/go-code-convention).
+
 ### Implementations
 
 Package `zip`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip)) and `tz`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/tz)) both enable you to transparently read or write ZIP/TAR.GZ compressed archives and the files inside them.

@@ -49,6 +49,17 @@ type TzArchive struct {
 	isHasWriter bool
 }
 
+// OpenFile is the generalized open call; most users will use Open
+// instead. It opens the named tar.gz file with specified flag
+// (O_RDONLY etc.) if applicable. If successful,
+// methods on the returned TzArchive can be used for I/O.
+// If there is an error, it will be of type *PathError.
+func OpenFile(fileName string, flag int, perm os.FileMode) (*TzArchive, error) {
+	tz := new(TzArchive)
+	err := tz.Open(fileName, flag, perm)
+	return tz, err
+}
+
 // Create creates the named tar.gz file, truncating
 // it if it already exists. If successful, methods on the returned
 // TzArchive can be used for I/O; the associated file descriptor has mode
@@ -65,17 +76,6 @@ func Create(fileName string) (*TzArchive, error) {
 // If there is an error, it will be of type *PathError.
 func Open(fileName string) (*TzArchive, error) {
 	return OpenFile(fileName, os.O_RDONLY, 0)
-}
-
-// OpenFile is the generalized open call; most users will use Open
-// instead. It opens the named tar.gz file with specified flag
-// (O_RDONLY etc.) if applicable. If successful,
-// methods on the returned TzArchive can be used for I/O.
-// If there is an error, it will be of type *PathError.
-func OpenFile(fileName string, flag int, perm os.FileMode) (*TzArchive, error) {
-	tz := new(TzArchive)
-	err := tz.Open(fileName, flag, perm)
-	return tz, err
 }
 
 // New accepts a variable that implemented interface io.Writer
@@ -158,6 +158,12 @@ func (tz *TzArchive) AddDir(dirPath, absPath string) error {
 	return nil
 }
 
+// updateStat should be called after every change for rebuilding statistic.
+func (tz *TzArchive) updateStat() {
+	tz.NumFiles = len(tz.files)
+	tz.isHasChanged = true
+}
+
 // AddFile adds a file entry to TzArchive.
 func (tz *TzArchive) AddFile(fileName, absPath string) error {
 	if cae.IsFilter(absPath) {
@@ -221,10 +227,4 @@ func (tz *TzArchive) DeleteName(name string) error {
 		}
 	}
 	return errors.New("entry with given name not found")
-}
-
-// updateStat should be called after every change for rebuilding statistic.
-func (tz *TzArchive) updateStat() {
-	tz.NumFiles = len(tz.files)
-	tz.isHasChanged = true
 }

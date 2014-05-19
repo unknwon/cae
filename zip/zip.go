@@ -52,6 +52,17 @@ type ZipArchive struct {
 	isHasWriter bool
 }
 
+// OpenFile is the generalized open call; most users will use Open
+// instead. It opens the named zip file with specified flag
+// (O_RDONLY etc.) if applicable. If successful,
+// methods on the returned ZipArchive can be used for I/O.
+// If there is an error, it will be of type *PathError.
+func OpenFile(name string, flag int, perm os.FileMode) (*ZipArchive, error) {
+	z := new(ZipArchive)
+	err := z.Open(name, flag, perm)
+	return z, err
+}
+
 // Create creates the named zip file, truncating
 // it if it already exists. If successful, methods on the returned
 // ZipArchive can be used for I/O; the associated file descriptor has mode
@@ -68,17 +79,6 @@ func Create(name string) (*ZipArchive, error) {
 // If there is an error, it will be of type *PathError.
 func Open(name string) (*ZipArchive, error) {
 	return OpenFile(name, os.O_RDONLY, 0)
-}
-
-// OpenFile is the generalized open call; most users will use Open
-// instead. It opens the named zip file with specified flag
-// (O_RDONLY etc.) if applicable. If successful,
-// methods on the returned ZipArchive can be used for I/O.
-// If there is an error, it will be of type *PathError.
-func OpenFile(name string, flag int, perm os.FileMode) (*ZipArchive, error) {
-	z := new(ZipArchive)
-	err := z.Open(name, flag, perm)
-	return z, err
 }
 
 // New accepts a variable that implemented interface io.Writer
@@ -163,6 +163,12 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 	return nil
 }
 
+// updateStat should be called after every change for rebuilding statistic.
+func (z *ZipArchive) updateStat() {
+	z.NumFiles = len(z.files)
+	z.isHasChanged = true
+}
+
 // AddFile adds a file entry to ZipArchive.
 func (z *ZipArchive) AddFile(fileName, absPath string) error {
 	if cae.IsFilter(absPath) {
@@ -224,10 +230,4 @@ func (z *ZipArchive) DeleteName(name string) error {
 		}
 	}
 	return errors.New("entry with given name not found")
-}
-
-// updateStat should be called after every change for rebuilding statistic.
-func (z *ZipArchive) updateStat() {
-	z.NumFiles = len(z.files)
-	z.isHasChanged = true
 }

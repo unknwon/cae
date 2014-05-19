@@ -7,7 +7,9 @@
 
 但本包依据 Go 语言的风格进行了一些修改。
 
-引用：[PHP:Compression and Archive Extensions](http://www.php.net/manual/en/refs.compression.php).
+引用：[PHP:Compression and Archive Extensions](http://www.php.net/manual/en/refs.compression.php)
+
+编码规范：基于 [Go 编码规范](https://github.com/Unknwon/go-code-convention)
 
 ### 实现
 
