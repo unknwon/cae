@@ -31,3 +31,7 @@ All subpackages use [GoConvey](http://goconvey.co/) to write test cases, and cov
 - [Gogs](https://github.com/gogits/gogs): self hosted Git service in the Go Programming Language.
 - [GoBlog](https://github.com/fuxiaohei/GoBlog): personal blogging application.
 - [GoBuild](https://github.com/shxsun/gobuild/): online Go cross-platform compilation and download service.
+
+## License
+
+This project is under Apache v2 License. See the [LICENSE](LICENSE) file for the full license text.

@@ -24,9 +24,9 @@ import (
 // A Streamer describes an streamable archive object.
 type Streamer interface {
 	StreamFile(string, os.FileInfo, []byte) error
+	StreamReader(string, os.FileInfo, io.Reader) error
 	Close() error
 }
-
 
 // A HookFunc represents a middleware for packing and extracting archive.
 type HookFunc func(string, os.FileInfo) error
