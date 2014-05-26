@@ -125,6 +125,17 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 	return z.ExtractToFunc(destPath, defaultExtractFunc, entries...)
 }
 
+// ExtractTo extracts given archive or the given files to the
+// specified destination.
+func ExtractTo(srcPath, destPath string, entries ...string) (err error) {
+	z, err := Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer z.Close()
+	return z.ExtractToFunc(destPath, defaultExtractFunc, entries...)
+}
+
 // extractFile extracts file from ZipArchive to file system.
 func (z *ZipArchive) extractFile(f *File) error {
 	if !z.isHasWriter {
