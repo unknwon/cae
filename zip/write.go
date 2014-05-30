@@ -66,7 +66,7 @@ var defaultExtractFunc = func(fullName string, fi os.FileInfo) error {
 	return nil
 }
 
-// ExtractTo extracts the whole archive or the given files to the
+// ExtractToFunc extracts the whole archive or the given files to the
 // specified destination.
 // It accepts a function as a middleware for custom operations.
 func (z *ZipArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...string) (err error) {
@@ -118,6 +118,18 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...
 	return nil
 }
 
+// ExtractToFunc extracts the whole archive or the given files to the
+// specified destination.
+// It accepts a function as a middleware for custom operations.
+func ExtractToFunc(srcPath, destPath string, fn cae.HookFunc, entries ...string) (err error) {
+	z, err := Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer z.Close()
+	return z.ExtractToFunc(destPath, fn, entries...)
+}
+
 // ExtractTo extracts the whole archive or the given files to the
 // specified destination.
 // Call Flush() to apply changes before this.
@@ -128,12 +140,7 @@ func (z *ZipArchive) ExtractTo(destPath string, entries ...string) (err error) {
 // ExtractTo extracts given archive or the given files to the
 // specified destination.
 func ExtractTo(srcPath, destPath string, entries ...string) (err error) {
-	z, err := Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer z.Close()
-	return z.ExtractToFunc(destPath, defaultExtractFunc, entries...)
+	return ExtractToFunc(srcPath, destPath, defaultExtractFunc, entries...)
 }
 
 // extractFile extracts file from ZipArchive to file system.

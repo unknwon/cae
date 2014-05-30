@@ -68,7 +68,7 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...
 	destPath = strings.Replace(destPath, "\\", "/", -1)
 	isHasEntry := len(entries) > 0
 	if Verbose {
-		fmt.Println("Unzipping " + tz.FileName + "...")
+		fmt.Println("Extracting " + tz.FileName + "...")
 	}
 	os.MkdirAll(destPath, os.ModePerm)
 
@@ -144,6 +144,17 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...
 // specified destination.
 // Call Flush() to apply changes before this.
 func (tz *TzArchive) ExtractTo(destPath string, entries ...string) (err error) {
+	return tz.ExtractToFunc(destPath, defaultExtractFunc, entries...)
+}
+
+// ExtractTo extracts given archive or the given files to the
+// specified destination.
+func ExtractTo(srcPath, destPath string, entries ...string) (err error) {
+	tz, err := Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer tz.Close()
 	return tz.ExtractToFunc(destPath, defaultExtractFunc, entries...)
 }
 
