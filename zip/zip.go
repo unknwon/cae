@@ -33,6 +33,7 @@ type File struct {
 	oldName    string // NOTE: unused, for future change name feature.
 	oldComment string // NOTE: unused, for future change comment feature.
 	absPath    string // Absolute path of local file system.
+	tmpPath    string
 }
 
 // A ZipArchive represents a file archive, compressed with Zip.

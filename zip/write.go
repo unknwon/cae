@@ -148,11 +148,11 @@ func (z *ZipArchive) extractFile(f *File) error {
 	if !z.isHasWriter {
 		for _, zf := range z.ReadCloser.File {
 			if f.Name == zf.Name {
-				return extractFile(zf, f.absPath)
+				return extractFile(zf, path.Dir(f.tmpPath))
 			}
 		}
 	}
-	return cae.Copy(f.Name, f.absPath)
+	return cae.Copy(f.tmpPath, f.absPath)
 }
 
 // Flush saves changes to original zip file if any.
@@ -173,9 +173,7 @@ func (z *ZipArchive) Flush() error {
 		}
 
 		// Relative path inside zip temporary changed.
-		if len(f.absPath) == 0 {
-			f.absPath = path.Join(tmpPath, f.Name)
-		}
+		f.tmpPath = path.Join(tmpPath, f.Name)
 		if err := z.extractFile(f); err != nil {
 			return err
 		}
