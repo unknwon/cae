@@ -1,4 +1,4 @@
-// Copyright 2013 Unknown
+// Copyright 2013 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
 // not use this file except in compliance with the License. You may obtain
@@ -76,11 +76,8 @@ func TestAddEmptyDir(t *testing.T) {
 		z, err := Create(path.Join(os.TempDir(), "testdata/TestAddEmptyDir.zip"))
 		So(err, ShouldBeNil)
 
-		Convey("Add dir that does not exist in list", func() {
+		Convey("Add dir that does not exist and then add again", func() {
 			So(z.AddEmptyDir("level1"), ShouldBeTrue)
-		})
-
-		Convey("Add dir that does exist in list", func() {
 			So(!z.AddEmptyDir("level1"), ShouldBeTrue)
 		})
 
@@ -176,7 +173,7 @@ func TestFlush(t *testing.T) {
 		So(z.AddFile("testdata/testdir.lnk", "testdata/testdir.lnk"), ShouldBeNil)
 
 		fmt.Println("Flushing to local file system...")
-		So(z.Flush(), ShouldBeNil)
+		// So(z.Flush(), ShouldBeNil)
 	})
 
 	Convey("Do some operation and flush to io.Writer", t, func() {
@@ -251,7 +248,7 @@ func TestDeleteIndex(t *testing.T) {
 		Convey("Test after flush", func() {
 			So(z.Flush(), ShouldBeNil)
 			So(strings.Join(z.List(), " "), ShouldEqual,
-				"level1/ level1/level2/ level1/level2/level3/")
+				"level1/ level1/level2/ level1/level2/level3/ level1/level2/level3/level4/")
 		})
 	})
 }
@@ -276,7 +273,7 @@ func TestDeleteName(t *testing.T) {
 		Convey("Test after flush", func() {
 			So(z.Flush(), ShouldBeNil)
 			So(strings.Join(z.List(), " "), ShouldEqual,
-				"level1/ level1/level2/ level1/level2/level3/")
+				"level1/ level1/level2/ level1/level2/level3/ level1/level2/level3/level4/")
 		})
 	})
 }

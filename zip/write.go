@@ -173,13 +173,12 @@ func (z *ZipArchive) Flush() error {
 		}
 
 		// Relative path inside zip temporary changed.
-		fileName := f.Name
-		f.Name = path.Join(tmpPath, fileName)
+		if len(f.absPath) == 0 {
+			f.absPath = path.Join(tmpPath, f.Name)
+		}
 		if err := z.extractFile(f); err != nil {
 			return err
 		}
-		// Change back here.
-		f.Name = fileName
 	}
 
 	if z.isHasWriter {

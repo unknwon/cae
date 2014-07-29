@@ -74,11 +74,8 @@ func TestAddEmptyDir(t *testing.T) {
 		z, err := Create(path.Join(os.TempDir(), "testdata/TestAddEmptyDir.tar.gz"))
 		So(err, ShouldBeNil)
 
-		Convey("Add dir that does not exist in list", func() {
+		Convey("Add dir that does not exist and then add again", func() {
 			So(z.AddEmptyDir("level1"), ShouldBeTrue)
-		})
-
-		Convey("Add dir that does exist in list", func() {
 			So(!z.AddEmptyDir("level1"), ShouldBeTrue)
 		})
 
@@ -248,7 +245,7 @@ func TestDeleteIndex(t *testing.T) {
 		Convey("Test after flush", func() {
 			So(z.Flush(), ShouldBeNil)
 			So(strings.Join(z.List(), " "), ShouldEqual,
-				"level1/ level1/level2/ level1/level2/level3/")
+				"level1/ level1/level2/ level1/level2/level3/ level1/level2/level3/level4/")
 		})
 	})
 }
@@ -273,7 +270,7 @@ func TestDeleteName(t *testing.T) {
 		Convey("Test after flush", func() {
 			So(z.Flush(), ShouldBeNil)
 			So(strings.Join(z.List(), " "), ShouldEqual,
-				"level1/ level1/level2/ level1/level2/level3/")
+				"level1/ level1/level2/ level1/level2/level3/ level1/level2/level3/level4/")
 		})
 	})
 }
