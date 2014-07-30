@@ -54,6 +54,10 @@ func extractFile(f *zip.File, destPath string) error {
 	if f.FileInfo().Mode()&os.ModeSymlink != 0 {
 		return nil
 	}
+	// Set back file information.
+	if err = os.Chtimes(filePath, f.ModTime(), f.ModTime()); err != nil {
+		return err
+	}
 	return os.Chmod(filePath, f.FileInfo().Mode())
 }
 

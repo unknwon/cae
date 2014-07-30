@@ -49,6 +49,10 @@ func extractFile(f *tar.Header, tr *tar.Reader, destPath string) error {
 	if f.FileInfo().Mode()&os.ModeSymlink != 0 {
 		return nil
 	}
+	// Set back file information.
+	if err = os.Chtimes(filePath, f.FileInfo().ModTime(), f.FileInfo().ModTime()); err != nil {
+		return err
+	}
 	return os.Chmod(filePath, f.FileInfo().Mode())
 }
 
