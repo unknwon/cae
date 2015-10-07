@@ -230,6 +230,8 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) er
 			if err != nil {
 				return err
 			}
+			defer f.Close()
+			
 			if _, err = io.Copy(fw, f); err != nil {
 				return err
 			}
