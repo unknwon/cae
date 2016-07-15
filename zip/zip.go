@@ -21,7 +21,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/Unknwon/cae"
@@ -108,6 +107,8 @@ func (z *ZipArchive) List(prefixes ...string) []string {
 // AddEmptyDir adds a raw directory entry to ZipArchive,
 // it returns false if same directory enry already existed.
 func (z *ZipArchive) AddEmptyDir(dirPath string) bool {
+	dirPath = strings.Replace(dirPath, "\\", "/", -1)
+
 	if !strings.HasSuffix(dirPath, "/") {
 		dirPath += "/"
 	}
@@ -149,8 +150,8 @@ func (z *ZipArchive) AddDir(dirPath, absPath string) error {
 		return err
 	}
 	for _, fi := range fis {
-		curPath := strings.Replace(absPath+"/"+fi.Name(), "\\", "/", -1)
-		tmpRecPath := strings.Replace(filepath.Join(dirPath, fi.Name()), "\\", "/", -1)
+		curPath := absPath + "/" + fi.Name()
+		tmpRecPath := path.Join(dirPath, fi.Name())
 		if fi.IsDir() {
 			if err = z.AddDir(tmpRecPath, curPath); err != nil {
 				return err
@@ -172,6 +173,9 @@ func (z *ZipArchive) updateStat() {
 
 // AddFile adds a file entry to ZipArchive.
 func (z *ZipArchive) AddFile(fileName, absPath string) error {
+	fileName = strings.Replace(fileName, "\\", "/", -1)
+	absPath = strings.Replace(absPath, "\\", "/", -1)
+
 	if cae.IsFilter(absPath) {
 		return nil
 	}
