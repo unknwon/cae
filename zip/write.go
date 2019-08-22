@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Unknwon/cae"
+	"github.com/unknwon/cae"
 )
 
 // Switcher of printing trace information when pack and extract.
@@ -231,7 +231,7 @@ func packFile(srcFile string, recPath string, zw *zip.Writer, fi os.FileInfo) er
 				return err
 			}
 			defer f.Close()
-			
+
 			if _, err = io.Copy(fw, f); err != nil {
 				return err
 			}

@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Unknwon/cae"
+	"github.com/unknwon/cae"
 )
 
 // A File represents a file or directory entry in archive.
