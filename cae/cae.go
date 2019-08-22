@@ -19,7 +19,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Unknwon/cae/tz"
+	"github.com/unknwon/cae/tz"
 )
 
 func main() {

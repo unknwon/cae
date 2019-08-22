@@ -1,7 +1,7 @@
 压缩与打包扩展
 =============
 
-[![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/cae)
+[![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/unknwon/cae)
 
 包 cae 实现了 PHP 风格的压缩与打包扩展。
 
@@ -9,11 +9,11 @@
 
 引用：[PHP:Compression and Archive Extensions](http://www.php.net/manual/en/refs.compression.php)
 
-编码规范：基于 [Go 编码规范](https://github.com/Unknwon/go-code-convention)
+编码规范：基于 [Go 编码规范](https://github.com/unknwon/go-code-convention)
 
 ### 实现
 
-包 `zip`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/zip)) 和 `tz`([Go Walker](http://gowalker.org/github.com/Unknwon/cae/tz)) 都允许你轻易的读取或写入 ZIP/TAR.GZ 压缩档案和其内部文件。
+包 `zip`([Go Walker](http://gowalker.org/github.com/unknwon/cae/zip)) 和 `tz`([Go Walker](http://gowalker.org/github.com/unknwon/cae/tz)) 都允许你轻易的读取或写入 ZIP/TAR.GZ 压缩档案和其内部文件。
 
 - 特性：
 	- 将任意位置的文件或目录加入档案，没有一对一的操作限制。

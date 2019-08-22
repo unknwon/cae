@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Unknwon/cae"
+	"github.com/unknwon/cae"
 )
 
 // Switcher of printing trace information when pack and extract.

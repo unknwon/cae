@@ -21,8 +21,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Unknwon/com"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/unknwon/com"
 )
 
 func TestCreate(t *testing.T) {
