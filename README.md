@@ -2,6 +2,7 @@ Compression and Archive Extensions
 ==================================
 
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/unknwon/cae/Go?logo=github&style=for-the-badge)](https://github.com/unknwon/cae/actions?query=workflow%3AGo)
+[![codecov](https://img.shields.io/codecov/c/github/unknwon/cae/master?logo=codecov&style=for-the-badge)](https://codecov.io/gh/unknwon/cae)
 [![GoDoc](https://img.shields.io/badge/GoDoc-Reference-blue?style=for-the-badge&logo=go)](https://pkg.go.dev/github.com/unknwon/cae?tab=doc)
 [![Sourcegraph](https://img.shields.io/badge/view%20on-Sourcegraph-brightgreen.svg?style=for-the-badge&logo=sourcegraph)](https://sourcegraph.com/github.com/unknwon/cae)
 
