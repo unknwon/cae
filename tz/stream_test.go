@@ -24,7 +24,12 @@ import (
 
 func TestStream(t *testing.T) {
 	Convey("Create a stream archive", t, func() {
-		fw, err := os.Create(path.Join(os.TempDir(), "testdata/TestStream.tar.gz"))
+		fpath := path.Join(os.TempDir(), "testdata/TestStream.tar.gz")
+		err := os.MkdirAll(path.Dir(fpath), os.ModePerm)
+		So(err, ShouldBeNil)
+		defer os.Remove(fpath)
+
+		fw, err := os.Create(fpath)
 		So(err, ShouldBeNil)
 		s := NewStreamArachive(fw)
 
