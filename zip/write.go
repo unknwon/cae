@@ -81,10 +81,11 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...
 	}
 	os.MkdirAll(destPath, os.ModePerm)
 	for _, f := range z.File {
+		isDir := strings.HasSuffix(f.Name, "/")
 		f.Name = cae.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
 
 		// Directory.
-		if strings.HasSuffix(f.Name, "/") {
+		if isDir {
 			if isHasEntry {
 				if cae.IsEntry(f.Name, entries) {
 					if err = fn(f.Name, f.FileInfo()); err != nil {
