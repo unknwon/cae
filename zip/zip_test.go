@@ -173,7 +173,7 @@ func TestFlush(t *testing.T) {
 		So(z.AddFile("testdata/testdir.lnk", "testdata/testdir.lnk"), ShouldBeNil)
 
 		fmt.Println("Flushing to local file system...")
-		// So(z.Flush(), ShouldBeNil)
+		So(z.Flush(), ShouldBeNil)
 	})
 
 	Convey("Do some operation and flush to io.Writer", t, func() {
