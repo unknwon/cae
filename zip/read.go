@@ -18,6 +18,8 @@ import (
 	"archive/zip"
 	"os"
 	"strings"
+
+	"github.com/unknwon/cae"
 )
 
 // OpenFile is the generalized open call; most users will use Open
@@ -58,7 +60,7 @@ func (z *ZipArchive) Open(name string, flag int, perm os.FileMode) error {
 		if err != nil {
 			return err
 		}
-		z.files[i].Name = strings.Replace(f.Name, "\\", "/", -1)
+		z.files[i].Name = cae.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
 		if f.FileInfo().IsDir() && !strings.HasSuffix(z.files[i].Name, "/") {
 			z.files[i].Name += "/"
 		}

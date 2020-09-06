@@ -20,6 +20,8 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"github.com/unknwon/cae"
 )
 
 // A ReadCloser represents a caller closable file reader.
@@ -88,7 +90,7 @@ func (tz *TzArchive) syncFiles() {
 	for i, f := range tz.File {
 		tz.files[i] = &File{}
 		tz.files[i].Header = f
-		tz.files[i].Name = strings.Replace(f.Name, "\\", "/", -1)
+		tz.files[i].Name = cae.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
 		if f.FileInfo().IsDir() && !strings.HasSuffix(tz.files[i].Name, "/") {
 			tz.files[i].Name += "/"
 		}

@@ -81,7 +81,7 @@ func (z *ZipArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...
 	}
 	os.MkdirAll(destPath, os.ModePerm)
 	for _, f := range z.File {
-		f.Name = strings.Replace(f.Name, "\\", "/", -1)
+		f.Name = cae.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
 
 		// Directory.
 		if strings.HasSuffix(f.Name, "/") {

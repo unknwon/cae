@@ -18,6 +18,7 @@ package cae
 import (
 	"io"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -105,4 +106,9 @@ func Copy(dest, src string) error {
 		return err
 	}
 	return os.Chmod(dest, si.Mode())
+}
+
+// Clean cleans up given path and returns a relative path that goes straight down.
+func Clean(p string) string {
+	return strings.Trim(path.Clean("/"+p), "/")
 }

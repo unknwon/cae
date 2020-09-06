@@ -69,7 +69,7 @@ var defaultExtractFunc = func(fullName string, fi os.FileInfo) error {
 // specified destination.
 // It accepts a function as a middleware for custom operations.
 func (tz *TzArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...string) (err error) {
-	destPath = strings.Replace(destPath, "\\", "/", -1)
+	destPath = strings.ReplaceAll(destPath, "\\", "/")
 	isHasEntry := len(entries) > 0
 	if Verbose {
 		fmt.Println("Extracting " + tz.FileName + "...")
@@ -103,7 +103,7 @@ func (tz *TzArchive) ExtractToFunc(destPath string, fn cae.HookFunc, entries ...
 			return err
 		}
 
-		h.Name = strings.Replace(h.Name, "\\", "/", -1)
+		h.Name = cae.Clean(strings.ReplaceAll(h.Name, "\\", "/"))
 
 		// Directory.
 		if h.Typeflag == tar.TypeDir {
