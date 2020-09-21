@@ -182,22 +182,22 @@ func (tz *TzArchive) Flush() (err error) {
 	}
 
 	// Extract to tmp path and pack back.
-	tmpPath := path.Join(os.TempDir(), "cae", path.Base(tz.FileName))
-	os.RemoveAll(tmpPath)
-	os.MkdirAll(tmpPath, os.ModePerm)
-	defer os.RemoveAll(tmpPath)
+	tmpPath := filepath.Join(os.TempDir(), "cae", filepath.Base(tz.FileName))
+	_ = os.RemoveAll(tmpPath)
+	_ = os.MkdirAll(tmpPath, os.ModePerm)
+	defer func() { _ = os.RemoveAll(tmpPath) }()
 
 	// Copy post-added files.
 	for _, f := range tz.files {
 		if strings.HasSuffix(f.Name, "/") {
-			os.MkdirAll(path.Join(tmpPath, f.Name), os.ModePerm)
+			_ = os.MkdirAll(filepath.Join(tmpPath, f.Name), os.ModePerm)
 			continue
 		} else if !cae.IsExist(f.absPath) {
 			continue
 		}
 
-		relPath := path.Join(tmpPath, f.Name)
-		os.MkdirAll(path.Dir(relPath), os.ModePerm)
+		relPath := filepath.Join(tmpPath, f.Name)
+		_ = os.MkdirAll(filepath.Dir(relPath), os.ModePerm)
 		if err := cae.Copy(relPath, f.absPath); err != nil {
 			return err
 		}
@@ -356,7 +356,7 @@ func packToWriter(srcPath string, w io.Writer, fn func(fullName string, fi os.Fi
 		return err
 	}
 
-	basePath := path.Base(srcPath)
+	basePath := filepath.Base(srcPath)
 
 	if fi.IsDir() {
 		if includeDir {
