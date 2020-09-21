@@ -167,18 +167,18 @@ func (z *ZipArchive) Flush() error {
 	}
 
 	// Extract to tmp path and pack back.
-	tmpPath := path.Join(os.TempDir(), "cae", path.Base(z.FileName))
-	os.RemoveAll(tmpPath)
-	defer os.RemoveAll(tmpPath)
+	tmpPath := filepath.Join(os.TempDir(), "cae", filepath.Base(z.FileName))
+	_ = os.RemoveAll(tmpPath)
+	defer func() { _ = os.RemoveAll(tmpPath) }()
 
 	for _, f := range z.files {
 		if strings.HasSuffix(f.Name, "/") {
-			os.MkdirAll(path.Join(tmpPath, f.Name), os.ModePerm)
+			_ = os.MkdirAll(filepath.Join(tmpPath, f.Name), os.ModePerm)
 			continue
 		}
 
 		// Relative path inside zip temporary changed.
-		f.tmpPath = path.Join(tmpPath, f.Name)
+		f.tmpPath = filepath.Join(tmpPath, f.Name)
 		if err := z.extractFile(f); err != nil {
 			return err
 		}
@@ -295,7 +295,7 @@ func packToWriter(srcPath string, w io.Writer, fn func(fullName string, fi os.Fi
 		return err
 	}
 
-	basePath := path.Base(srcPath)
+	basePath := filepath.Base(srcPath)
 	if fi.IsDir() {
 		if includeDir {
 			if err = packFile(srcPath, basePath, zw, fi); err != nil {

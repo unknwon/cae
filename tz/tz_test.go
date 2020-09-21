@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -89,12 +91,15 @@ func TestAddEmptyDir(t *testing.T) {
 
 func TestAddDir(t *testing.T) {
 	Convey("Open a tar.gz file and add dir with files", t, func() {
-		z, err := Create(path.Join(os.TempDir(), "testdata/TestAddDir.tar.gz"))
+		z, err := Create(filepath.Join(os.TempDir(), "testdata/TestAddDir.tar.gz"))
 		So(err, ShouldBeNil)
 
 		Convey("Add a dir that does exist", func() {
 			So(z.AddDir("testdata/testdir", "testdata/testdir"), ShouldBeNil)
-			So(strings.Join(z.List(), " "), ShouldEqual,
+
+			list := z.List()
+			sort.Strings(list)
+			So(strings.Join(list, " "), ShouldEqual,
 				"testdata/ testdata/testdir/ testdata/testdir/gophercolor16x16.png"+
 					" testdata/testdir/level1/ testdata/testdir/level1/README.txt")
 		})
